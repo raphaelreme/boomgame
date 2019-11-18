@@ -1,0 +1,5 @@
+graft bomberman
+graft docs
+global-exclude *.py[cod] __pycache__ *.so *.swp *~
+
+prune tests

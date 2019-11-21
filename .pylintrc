@@ -144,6 +144,7 @@ disable=print-statement,
         missing-module-docstring,
         too-few-public-methods,
         super-init-not-called,
+        cyclic-import,
 
 
 # Enable the message, report, category or checker with the given id(s). You can

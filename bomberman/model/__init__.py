@@ -3,12 +3,10 @@
 Defines all the data classes used in it.
 """
 
-__all__ = ['maze', 'obstacle', 'player']
-
-BOX_SIZE = 50
+__all__ = ["entity", "events", "maze"]
 
 
 # pylint: disable = wrong-import-position
+from . import entity
+from . import events
 from . import maze
-from . import obstacle
-from . import player

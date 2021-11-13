@@ -1,84 +1,98 @@
 """Handle the Maze to display it on the screen."""
 
 import pygame
+import pygame.rect
+import pygame.surface
 
 from ..designpattern import event
 from ..designpattern import observer
 from ..model import events
-from ..model import obstacle
 from ..model import maze
-from . import obstacle_view
-from . import player_view
+from . import TILE_SIZE, inflate_to_reality
+from . import entity_view
 from . import view
 
 
 class MazeView(view.View, observer.Observer):
-    background_location = 'background.png'
+    """View for a maze.
 
-    def __init__(self, maze_: maze.Maze):
-        super().__init__()
+    It displays the entire maze (Background, borders, entities).
+    """
+
+    border_file = "border.png"
+    background_file = "background.png"
+
+    def __init__(self, maze_: maze.Maze, style: int) -> None:
+        """Constructor
+
+        Args:
+            maze_ (maze.Maze): The maze to represent
+            style (int): Style to adopt from 0 to 7
+        """
+        maze_size = inflate_to_reality(maze_.size)
+        self.maze_rect = pygame.rect.Rect(TILE_SIZE, maze_size)
+
+        super().__init__((0, 0), (maze_size[0] + 2 * TILE_SIZE[0], maze_size[1] + 2 * TILE_SIZE[1]))
+
         self.maze = maze_
         self.maze.add_observer(self)
 
-        self.bomb_views = []
-        self.obstacle_views = []
-        self.player_views = []
+        ## Build the background once for all
+        self.background = pygame.surface.Surface(self.size)
+        self._build_background(style)
 
-        for obstacle_ in self.maze.obstacles:
-            self.create_obstacle_view(obstacle_)
-        for bomb in self.maze.bombs:
-            self.create_obstacle_view(bomb)
-        for player_ in self.maze.players:
-            self.player_views.append(player_view.PlayerView(player_))
+        # Set of all the views for each component of the maze
+        self.entity_views = {entity_view.EntityView.from_entity(entity_) for entity_ in self.maze.entities}
+        for view_ in self.entity_views:
+            view_.set_style(style)
 
-        box_size = obstacle.Obstacle.size
-        background_box = view.View.load_image(self.background_location, box_size)
-        self.image = pygame.surface.Surface(self.maze.size)  # pylint: disable = c-extension-no-member
+    def _build_background(self, style: int) -> None:
+        """Build the background surface for the given style"""
+        background_sprite = view.load_image(self.background_file, inflate_to_reality((8, 1)))
+        border_sprite = view.load_image(self.border_file, inflate_to_reality((8, 8)))
 
-        for i in range(self.maze.height):
-            for j in range(self.maze.width):
-                self.image.blit(background_box, (j * box_size[0], i * box_size[1]))
+        # First add background everywhere
+        current_sprite = pygame.rect.Rect(inflate_to_reality((style, 0)), TILE_SIZE)
 
-    def display(self):
-        super().display()
+        for i in range(self.maze.size[0] + 2):
+            for j in range(self.maze.size[1] + 2):
+                self.background.blit(background_sprite, inflate_to_reality((i, j)), current_sprite)
 
-        for obstacle_ in self.obstacle_views:
-            obstacle_.display()
-        for bomb_ in self.bomb_views:
-            bomb_.display()
-        for player in self.player_views:
-            player.display()
+        # Then display the borders
+        rows, cols = self.maze.size
 
-    def notify(self, event_: event.Event):
-        if isinstance(event_, events.NewObstacleEvent):
-            self.create_obstacle_view(event_.obstacle)
+        for j in (0, cols + 1):  # Columns
+            for i in range(1, rows + 1):
+                current_sprite = pygame.rect.Rect(inflate_to_reality((style, j != 0)), TILE_SIZE)
+                self.background.blit(border_sprite, inflate_to_reality((i, j)), current_sprite)
 
-        elif isinstance(event_, events.NewPlayerEvent):
-            self.player_views.append(player_view.PlayerView(event_.player))
+        for i in (0, rows + 1):  # Rows
+            for j in range(1, cols + 1):
+                current_sprite = pygame.rect.Rect(inflate_to_reality((style, 2 + (i != 0))), TILE_SIZE)
+                self.background.blit(border_sprite, inflate_to_reality((i, j)), current_sprite)
 
-        elif isinstance(event_, events.DeleteObstacleEvent):
-            obstacle_ = event_.obstacle
-            if isinstance(obstacle_, obstacle.Bomb):
-                for bomb_view_ in self.bomb_views:
-                    if bomb_view_.obstacle == obstacle_:
-                        self.bomb_views.remove(bomb_view_)
-                        break
-            else:
-                for obstacle_view_ in self.obstacle_views:
-                    if obstacle_view_.obstacle == obstacle_:
-                        self.obstacle_views.remove(obstacle_view_)
-                        break
+        for n, i, j in [(4, rows + 1, 0), (5, rows + 1, cols + 1), (6, 0, cols + 1), (7, 0, 0)]:  # Corners
+            current_sprite = pygame.rect.Rect(inflate_to_reality((style, n)), TILE_SIZE)
+            self.background.blit(border_sprite, inflate_to_reality((i, j)), current_sprite)
 
-        elif isinstance(event_, events.DeletePlayerEvent):
-            for player_view_ in self.player_views:
-                if player_view_.player == event_.player:
-                    self.player_views.remove(player_view_)
-                    break
+    def display(self, surface: pygame.surface.Surface) -> None:
+        # Display the background
+        surface.blit(self.background, self.position)
 
-    def create_obstacle_view(self, obstacle_: obstacle.Obstacle):
-        if isinstance(obstacle_, obstacle.WoodWall):
-            self.obstacle_views.append(obstacle_view.WoodWallView(obstacle_))
-        elif isinstance(obstacle_, obstacle.StoneWall):
-            self.obstacle_views.append(obstacle_view.StoneWallView(obstacle_))
-        elif isinstance(obstacle_, obstacle.Bomb):
-            self.bomb_views.append(obstacle_view.BombView(obstacle_))
+        # And the components of the maze
+        maze_surface = surface.subsurface(self.maze_rect)
+
+        for view_ in sorted(self.entity_views):
+            view_.display(maze_surface)
+
+    def notify(self, event_: event.Event) -> None:
+        if isinstance(event_, events.NewEntityEvent):
+            self.entity_views.add(entity_view.EntityView.from_entity(event_.entity))
+            event_.handled = True
+            return
+        if isinstance(event_, events.RemovedEntityEvent):
+            for view_ in self.entity_views:
+                if view_.entity == event_.entity:  # FIXME: Directly remove ?
+                    self.entity_views.remove(view_)
+                    event_.handled = True
+                    return

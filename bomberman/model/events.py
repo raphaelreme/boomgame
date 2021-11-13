@@ -2,42 +2,79 @@
 
 from __future__ import annotations
 
-from typing import Tuple
-
-from . import obstacle
-from . import player
+from . import entity
 from ..designpattern.event import Event
 
 
-class NewPlayerEvent(Event):
-    def __init__(self, player_: player.Player):
-        self.player = player_
+class MazeStartEvent(Event):
+    """At each new maze"""
 
 
-class DeletePlayerEvent(Event):
-    def __init__(self, player_: player.Player):
-        self.player = player_
+class MazeEndEvent(Event):
+    """When a maze is released"""
 
 
-class PlayerMovedEvent(Event):
-    def __init__(self, former_pos: Tuple[float, float], new_pos: Tuple[float, float]):
-        self.former_pos = former_pos
-        self.new_pos = new_pos
+class GameEndEvent(Event):
+    """When the game is done"""
 
 
-# class PlayerBlockedEvent(Event):
-#     pass
+class StartScreenEvent(Event):
+    """At the beginning of each start screen"""
 
 
-class NewObstacleEvent(Event):
-    def __init__(self, obstacle_: obstacle.Obstacle):
-        self.obstacle = obstacle_
+class ForwardStartScreenEvent(Event):
+    "Could be used to update the start scren"
 
 
-class DeleteObstacleEvent(Event):
-    def __init__(self, obstacle_: obstacle.Obstacle):
-        self.obstacle = obstacle_
+class BonusScreenEvent(Event):
+    """At the begining of each bonus screen"""
 
 
-class ObstacleBombedEvent(Event):
+class ForwardBonusScreenEvent(Event):
+    """Could be used to update the bonus screen (animation ?)"""
+
+
+class MazeFailedEvent(Event):
+    """When the maze is detected as failed"""
+
+
+class MazeSolvedEvent(Event):
+    """When the maze is detected as solved"""
+
+
+class MazeEndingEvent(Event):
+    """Each update of the maze, when it is ending"""
+
+
+class EntityEvent(Event):
+    def __init__(self, entity_: entity.Entity):
+        super().__init__()
+        self.entity = entity_
+
+
+class NewEntityEvent(EntityEvent):
     pass
+
+
+class ForwardTimeEvent(EntityEvent):
+    pass
+
+
+class MovedEntityEvent(EntityEvent):
+    pass
+
+
+class HitEntityEvent(EntityEvent):
+    pass
+
+
+class RemovingEntityEvent(EntityEvent):
+    pass
+
+
+class RemovedEntityEvent(EntityEvent):
+    pass
+
+
+class LifeLossEvent(EntityEvent):
+    """When a player loses a life (after its removing delay)"""

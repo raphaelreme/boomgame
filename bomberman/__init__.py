@@ -5,7 +5,7 @@ from . import model
 from . import view
 
 
-from .version import __version__
+__version__ = "0.2.0dev"
 
 
-__all__ = ['controller', 'designpattern', 'model', 'view']
+__all__ = ["controller", "designpattern", "model", "view"]

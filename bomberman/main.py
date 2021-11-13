@@ -1,31 +1,54 @@
-import os
+from typing import Dict, List
 
 import pygame
+import pygame.display
+import pygame.event
+import pygame.time
+import pygame.locals
 
 from .controller import control
 from .controller import controller
-from .model import maze
-from .view import maze_view
-from .view import view
+from .model import game
+from .view import game_view
+
+# TODO: Menu + Settings
 
 
-class Game:
-    name = 'Bomberman'
-    @staticmethod
-    def menu():
-        return Game.game(input("Enter the level id: "))
+class BoomGame:
+    """BOOM Game"""
 
-    @staticmethod
-    def game(maze_id):
-        path = os.path.join(os.path.dirname(__file__), 'data', 'maze', f'{maze_id}.txt')
-        maze_ = maze.Maze.from_file(path)
+    name = "BOOM"
 
-        pygame.display.set_mode(maze_.size)
-        pygame.display.set_caption(f'{Game.name} - level {maze_id}')
-        pygame.display.set_icon(view.View.load_image('boom.png', (10, 10)))
+    def __init__(self) -> None:
+        self.game_name = ""
+        self.score = 0
+        self.two_players = True
 
-        maze_view_ = maze_view.MazeView(maze_)
-        maze_controller = controller.MazeController(maze_)
+    def main(self):
+        while True:
+            self.main_menu()
+            self.game()
+
+    def main_menu(self) -> None:
+        """Main menu, not implemented yet"""
+
+        c = input("Menu not implemented yet. Two players (y|n) ? ")
+        self.two_players = c.lower().strip() == "y"
+        self.game_name = "boom"
+
+    def game(self) -> None:
+        """Launch a game."""
+
+        model = game.GameModel(self.game_name, self.two_players)
+        main_view = game_view.GameView(model)
+
+        pygame.display.set_mode(main_view.size)
+        pygame.display.set_caption(f"{BoomGame.name} - level {model.maze_solved + 1}")
+        # pygame.display.set_icon(view.load_image("boom.png", (10, 10)))
+
+        model.start()
+
+        main_controller = controller.GameController(model)
 
         running = True
         timer = pygame.time.Clock()
@@ -34,16 +57,17 @@ class Game:
                 if event.type == control.TypeControl.QUIT:
                     running = False
                     break
-                maze_controller.handle_event(event)
+                main_controller.handle_user_event(event)
 
-            delta_time = timer.tick(48)/1000
-            maze_controller.time_spend(delta_time)
+            delta_time = timer.tick(48) / 1000
+            main_controller.tick(delta_time)
 
-            maze_view_.display()
+            main_view.display(pygame.display.get_surface())
             pygame.display.flip()
 
 
-def main():
-    assert pygame.init() == (6, 0)
-    Game.menu()
+def main() -> None:
+    assert pygame.init()[1] == 0
+    pygame.display.set_mode((0, 0), pygame.HIDDEN)
+    BoomGame().main()  # Entry point of the game
     pygame.quit()

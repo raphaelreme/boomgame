@@ -5,4 +5,4 @@ from . import observable
 from . import observer
 
 
-__all__ = ['event', 'observable', 'observer']
+__all__ = ["event", "observable", "observer"]

@@ -4,5 +4,7 @@ from . import event
 
 
 class Observer:
-    def notify(self, event_: event.Event):
+    """An observer can be registered in an observable object and will be notify when needed"""
+
+    def notify(self, event_: event.Event) -> None:
         raise NotImplementedError

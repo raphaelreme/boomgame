@@ -1,10 +1,10 @@
-# bomberman
-Bomberman game based on BOOM game (on macintosh).
+# Bomberman
+Bomberman game clone of BOOM game (on macintosh).
 It uses python and pygame library.
 
 ## Install
-Install Python >= 3.7.
-Then run `pip install -e .` in the main folder.
+Install Python >= 3.6.
+Then run `pip install .` in the main folder.
 
 It will install pygame library and the bomberman game.
 

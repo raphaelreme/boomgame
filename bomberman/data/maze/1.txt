@@ -1,13 +1,13 @@
-p   w w    w   
- sws sws sws s 
-    w w w     w
- sws s s sws s 
-w       w   w w
- s sws s sws s 
-   w  w   w    
-ws sws s sws s 
-w  w   ww     w
- sws s swsws s 
-    w w     ww 
-wsws s sws s s 
-  w  w    w   p
+X| | | |B| |B| | | | |B| | | 
+ |S|B|S| |S|B|S| |S|B|S| |S| 
+ | | | |B| |B| |B| | | | | |B
+ |S|B|S| |S| |S| |S|B|S| |S| 
+B| | | | | | | |B| | | |B| |B
+ |S| |S|B|S| |S| |S|B|S| |S| 
+ | | |B| | |B| | | |B| | | | 
+B|S| |S|B|S| |S| |S|B|S| |S| 
+B| | |B| | | |B|B| | | | | |B
+ |S|B|S| |S| |S|B|S|B|S| |S| 
+ | | | |B| |B| | | | | |B|B| 
+B|S|B|S| |S| |S|B|S| |S| |S| 
+ | |B| | |B| | | | |B| | | |Y

@@ -1,0 +1,13 @@
+S|S| |B| | |X| |Y| | |B| |S|S
+S|S| |S|S|S|S|S|S|S|S|S| |S|S
+ | | |S| | | | | | | |S| | | 
+B|S|B|S| |S| |S| |S| |S|B|S|B
+ |B| |S| |S|S|S|S|S| |S| |B| 
+ |S| |S| |S| |S| |S| |S| |S| 
+ |B| |S| | | | | | | |S| |B| 
+ |S| |S|S|S| |S| |S|S|S| |S| 
+ |B| | | |S| |S| |S| | | |B| 
+B|S|B|S| |S| |S| |S| |S|B|S|B
+ | | |B| |S| | | |S| |B| | | 
+S|S| |S| |S|S|S|S|S| |S| |S|S
+S|S| |B| | | | | | | |B| |S|S

@@ -1,0 +1,402 @@
+[
+ {
+  "style": 0,
+  "maze_id": 1,
+  "time": 60
+ },
+ {
+  "style": 0,
+  "maze_id": 2,
+  "time": 120
+ },
+ {
+  "style": 0,
+  "maze_id": 3,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 4,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 5,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 6,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 7,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 8,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 9,
+  "time": 180
+ },
+ {
+  "style": 0,
+  "maze_id": 10,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 11,
+  "time": 240
+ },
+ {
+  "style": 1,
+  "maze_id": 12,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 13,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 14,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 15,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 16,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 17,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 18,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 19,
+  "time": 180
+ },
+ {
+  "style": 1,
+  "maze_id": 20,
+  "time": 180
+ },
+ {
+  "style": 2,
+  "maze_id": 21,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 22,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 23,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 24,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 25,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 26,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 27,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 28,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 29,
+  "time": 240
+ },
+ {
+  "style": 2,
+  "maze_id": 30,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 31,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 32,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 33,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 34,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 35,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 36,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 37,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 38,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 39,
+  "time": 240
+ },
+ {
+  "style": 3,
+  "maze_id": 40,
+  "time": 240
+ },
+ {
+  "style": 4,
+  "maze_id": 41,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 42,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 43,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 44,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 45,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 46,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 47,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 48,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 49,
+  "time": 300
+ },
+ {
+  "style": 4,
+  "maze_id": 50,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 51,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 52,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 53,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 54,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 55,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 56,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 57,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 58,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 59,
+  "time": 300
+ },
+ {
+  "style": 5,
+  "maze_id": 60,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 61,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 62,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 63,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 64,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 65,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 66,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 67,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 68,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 69,
+  "time": 300
+ },
+ {
+  "style": 6,
+  "maze_id": 70,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 71,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 72,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 73,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 74,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 75,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 76,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 77,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 78,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 79,
+  "time": 300
+ },
+ {
+  "style": 7,
+  "maze_id": 80,
+  "time": 300
+ }
+]

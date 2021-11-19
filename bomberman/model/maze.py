@@ -166,13 +166,13 @@ class Maze(observable.Observable):
             if isinstance(entity_, entity.Enemy):
                 enemies += 1
 
-        if players == 1:
-            self.state = Maze.State.SOLVED  # FAILED
+        if not players:
+            self.state = Maze.State.FAILED
             self.end_timer.start(Maze.END_DELAY)
             self.changed(events.MazeFailedEvent())
             return
 
-        if not enemies and False:
+        if not enemies:
             self.state = Maze.State.SOLVED
             self.end_timer.start(Maze.END_DELAY)
             self.changed(events.MazeSolvedEvent())

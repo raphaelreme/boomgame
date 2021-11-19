@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import random
 from typing import Dict, List, Optional, Set
 
 from ..designpattern import observable
@@ -258,6 +259,8 @@ class MovingEntity(Entity):
         BLOCKED_BY (Set[Entity]): Entities that will block thes
     """
 
+    # FIXME: Collision with moving entity does not work
+
     BASE_SPEED = 300
     BLOCKED_BY: Set[EntityClass] = set()
 
@@ -265,20 +268,30 @@ class MovingEntity(Entity):
         super().__init__(maze_, position)
         self.speed = self.BASE_SPEED
         self.current_direction: Optional[Direction] = None
-        self.next_direction: Optional[Direction] = None
+        self.next_direction: Optional[Direction] = None  # Could be for the player only ?
         self.next_position: Optional[Position] = None
         self.step = 0
         self.try_moving_since: float = 0
 
     def set_wanted_direction(self, direction: Optional[Direction]) -> None:
-        """Set the direction the player wants to go.
+        """Set the direction the entity wants to go.
 
-        First finish the current movements and then let's go there if the player hasn't changed its mind
+        If set during a current movement, the movement is first finished. Then the entity can change its direction
 
         Args:
             direction (Optional, Direction): The next direction to follow. If None, the movement will be stopped
         """
         self.next_direction = direction
+
+    def _update_direction(self) -> None:
+        """Update the direction once a movement is done
+
+        Called internally by `update`. The current direction can be updated from the next direction,
+        or this can also be ignored and set according to what happens in the maze (for instance for enemies)
+
+        By default the next_direction is used to update the current one
+        """
+        self.current_direction = self.next_direction
 
     def update(self, delay: float) -> None:
         """Update the position after a small delay
@@ -291,17 +304,14 @@ class MovingEntity(Entity):
             return
 
         if not self.next_position:  # There is no current movement, thus the direction can be updated directly
-            if self.current_direction and not self.next_direction:  # Stop trying to move against an obstacle
-                self.current_direction = self.next_direction
-                self.changed(events.MovedEntityEvent(self))
-            else:
-                self.current_direction = self.next_direction
+            was_moving = self.current_direction != None
+            self._update_direction()
+            if not self.current_direction and was_moving:
+                self.changed(events.MovedEntityEvent(self))  # Stop trying to move against an obstacle
 
         if not self.current_direction:  # No direction, nothing to do
             return
 
-        # FIXME: Collide two players ? when both try to get to the same tilde or one follow the other
-        # FIXME: Collide for enemies ? Moving enemies ? Is it really similar ?
         # Let's move or keep moving
         self.try_moving_since += delay
 
@@ -322,13 +332,10 @@ class MovingEntity(Entity):
             # Reset movement
             self.step = 0
             self.next_position = None
-            self.current_direction = None
             self.try_moving_since = 0
+            self._update_direction()
 
-            if self.next_direction:
-                self.current_direction = self.next_direction
-                # Keep the same next direction until set_wanted_direction is called
-
+            if self.current_direction:
                 next_position = self.position + self.current_direction
                 if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
                     self.next_position = next_position
@@ -463,8 +470,82 @@ Player.BLOCKED_BY = set([BreakableWall, SolidWall, Player])
 class Enemy(MovingEntity):
     """Base class for all enemies."""
 
+    REMOVING_DELAY = 2
+    BASE_SPEED = 200
     VULNERABILITIES = [Damage.Type.BOMBS]
+    ERRATIC = False  # Can randomly turn around
+    # TODO: Special behavior of each entity, like sprint, turn back on the player, following him etc
+
+    def __init__(self, maze_: maze.Maze, position: Position) -> None:
+        super().__init__(maze_, position)
+
+    def _update_direction(self) -> None:
+        # Could may be be unified in Enemy class
+        opposite = {
+            None: None,
+            Direction.UP: Direction.DOWN,
+            Direction.DOWN: Direction.UP,
+            Direction.RIGHT: Direction.LEFT,
+            Direction.LEFT: Direction.RIGHT,
+        }[self.current_direction]
+
+        plausible_directions = []
+        for direction in [Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT]:
+            next_position = self.position + direction
+            if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
+                plausible_directions.append(direction)
+
+        if not plausible_directions:
+            return  # Don't work for now
+
+        if not self.ERRATIC and opposite in plausible_directions and len(plausible_directions) > 1:
+            plausible_directions.remove(opposite)
+
+        self.current_direction = random.choice(plausible_directions)
 
 
-# FIXME: Beurk
+# XXX: Ugly
 Enemy.BLOCKED_BY = set([BreakableWall, SolidWall, Enemy])
+
+
+class Soldier(Enemy):
+    REPR = "0"
+    ERRATIC = True
+
+
+class Sarge(Enemy):
+    REPR = "1"
+    ERRATIC = True
+
+
+class Lizzy(Enemy):
+    REPR = "2"
+
+
+class Taur(Enemy):
+    REPR = "3"
+    BASE_SPEED = 300  # TODO: Improve speed estimation for all entities
+
+
+class Gunner(Enemy):
+    REPR = "4"
+
+
+class Thing(Enemy):
+    REPR = "5"
+
+
+class Ghost(Enemy):
+    REPR = "6"
+
+
+class Smoulder(Enemy):
+    REPR = "7"
+
+
+class Skully(Enemy):
+    REPR = "8"
+
+
+class Giggler(Enemy):
+    REPR = "9"

@@ -60,13 +60,8 @@ class EntityView(view.Sprite, observer.Observer):
 
     @staticmethod
     def from_entity(entity_: entity.Entity) -> EntityView:
-        return {
-            entity.SolidWall: SolidWallView,
-            entity.BreakableWall: BreakableWallView,
-            entity.Bomb: BombView,
-            entity.Laser: LaserView,
-            entity.Player: PlayerView,
-        }[type(entity_)](entity_)
+        class_name = f"{entity_.__class__.__name__}View"
+        return globals()[class_name](entity_)
 
     def __lt__(self, other) -> bool:
         """Entity views are sorted by priority"""
@@ -150,12 +145,10 @@ class LaserView(EntityView):
         self.removing_steps = [(entity_.orientation.value, index[1]) for index in self.REMOVING_STEPS]
 
 
-class PlayerView(EntityView):
-    PRIORITY = 20
-    ROWS = 5
-    COLUMNS = 8
+class MovingEntityView(EntityView):
+    """Base view class for all moving entity"""
+
     RATE = 0.1
-    REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 10 + [(4, 1)] * 5
 
     direction_to_column = {
         None: 0,
@@ -165,10 +158,8 @@ class PlayerView(EntityView):
         entity.Direction.LEFT: 3,
     }
 
-    def __init__(self, entity_: entity.Player) -> None:
-        self.FILE_NAME = f"player{entity_.identifier}.png"  # pylint: disable = invalid-name
+    def __init__(self, entity_: entity.MovingEntity) -> None:
         super().__init__(entity_)
-
         i = self.direction_to_column[entity_.current_direction]
         self.select_sprite(i, 0)
 
@@ -177,20 +168,93 @@ class PlayerView(EntityView):
         if event_.handled:
             return
 
-        if isinstance(event_, (events.MovedEntityEvent, events.LifeLossEvent)):
-            player = cast(entity.Player, event_.entity)
-            self.position = inflate_to_reality((player.position.i, player.position.j))
-            if not player.current_direction:  # Player do not try to moves.
-                self.select_sprite(self.direction_to_column[player.current_direction], 0)  # Should refer to 0, 0
+        if isinstance(event_, (events.MovedEntityEvent, events.LifeLossEvent)):  # XXX
+            entity_ = cast(entity.MovingEntity, event_.entity)
+            self.position = inflate_to_reality((entity_.position.i, entity_.position.j))
+            if not entity_.current_direction:  # End of a movement probably
+                self.select_sprite(self.direction_to_column[entity_.current_direction], 0)
                 return
 
-            i = self.direction_to_column[player.current_direction]
-            j = int(player.try_moving_since / self.RATE) % self.COLUMNS
+            i = self.direction_to_column[entity_.current_direction]
+            j = int(entity_.try_moving_since / self.RATE) % self.COLUMNS
             self.select_sprite(i, j)
 
-            if player.next_position:
-                next_position = inflate_to_reality((player.next_position.i, player.next_position.j))
+            if entity_.next_position:
+                next_position = inflate_to_reality((entity_.next_position.i, entity_.next_position.j))
                 self.position = (
-                    int((self.position[0] * (100 - player.step) + player.step * next_position[0]) / 100),
-                    int((self.position[1] * (100 - player.step) + player.step * next_position[1]) / 100),
+                    int((self.position[0] * (100 - entity_.step) + entity_.step * next_position[0]) / 100),
+                    int((self.position[1] * (100 - entity_.step) + entity_.step * next_position[1]) / 100),
                 )
+
+
+class PlayerView(MovingEntityView):
+    PRIORITY = 20
+    ROWS = 5
+    COLUMNS = 8
+    REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 10 + [(4, 1)] * 5
+
+    def __init__(self, entity_: entity.Player) -> None:
+        self.FILE_NAME = f"player{entity_.identifier}.png"  # pylint: disable = invalid-name
+        super().__init__(entity_)
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+        if event_.handled:
+            return
+
+        if isinstance(event_, events.LifeLossEvent):
+            # In case of a life loss, let's update the sprite like it would be done when moving
+            super().notify(events.MovedEntityEvent(event_.entity))
+
+
+class EnemyView(MovingEntityView):
+    """Base view class for enemies"""
+
+    PRIORITY = 15
+    ROWS = 6
+    COLUMNS = 4
+    REMOVING_STEPS = [(5, 0), (5, 1)] * 10
+
+    def __init__(self, entity_: entity.Enemy) -> None:
+        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
+        super().__init__(entity_)
+
+
+class SoldierView(EnemyView):
+    pass
+
+
+class SargeView(EnemyView):
+    pass
+
+
+class LizzyView(EnemyView):
+    REMOVING_STEPS = [(5, 0), (5, 1), (5, 2), (5, 3)] * 5
+
+
+class TaurView(EnemyView):
+    pass
+
+
+class GunnerView(EnemyView):
+    pass
+
+
+class ThingView(EnemyView):
+    pass
+
+
+class GhostView(EnemyView):
+    pass
+
+
+class SmoulderView(EnemyView):
+    REMOVING_STEPS = [(5, 0), (5, 1), (5, 2), (5, 3)] * 5
+
+
+class SkullyView(EnemyView):
+    pass
+
+
+class GigglerView(EnemyView):
+    pass

@@ -414,16 +414,9 @@ class Player(MovingEntity):
         self.score = 0
         # TODO: Invulnerability time with new life, shield bonus, any hit
 
-    def reset(self, keep_observers=False) -> None:
-        """Reset the player.
-
-        Useful with the player death or a switch of maze.
-
-        Args:
-            keep_observers (bool): If False, observers are dropped.
-        """
-        if not keep_observers:
-            super().reset()  # Drop links to the observers so that they can be garbage collected
+    def reset(self) -> None:
+        """Reset the player when changing of maze"""
+        super().reset()  # Drop links to the observers so that they can be garbage collected
 
         # Player related
         self.fast = False
@@ -441,6 +434,14 @@ class Player(MovingEntity):
         # Entity related
         self.removing_timer.reset()
 
+    def new_life(self) -> None:
+        """Reset some stuff when a player loses a life"""
+        self.fast = False
+        self.shield = False
+        # Reset bonus
+
+        self.removing_timer.reset()
+
     def remove(self) -> None:
         self.life -= 1
         if not self.life:
@@ -448,7 +449,7 @@ class Player(MovingEntity):
         else:
             self.health = self.BASE_HEALTH
 
-        self.reset(True)
+        self.new_life()
         # TODO: Reset bonus
         self.changed(events.LifeLossEvent(self))
 

@@ -6,12 +6,13 @@ It holds all the data of the game.
 from __future__ import annotations
 
 import enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from ..designpattern import observable
 from . import entity
 from . import events
 from . import timer
+from . import vector
 
 
 class MazeException(Exception):
@@ -54,7 +55,7 @@ class Maze(observable.Observable):
         self.size = size
         self.state = Maze.State.RUNNING
         self.entities: Set[entity.Entity] = set()
-        self.player_spawns: Dict[int, entity.Position] = {}
+        self.player_spawns: Dict[int, vector.Vector] = {}
         self.end_timer = timer.Timer()
 
     def add_entity(self, entity_: entity.Entity) -> None:
@@ -93,12 +94,14 @@ class Maze(observable.Observable):
         player.register_new_maze(self, position)
         self.add_entity(player)
 
-    def contains(self, entity_classes: Tuple[entity.EntityClass, ...], position: entity.Position) -> bool:
+    def contains(self, entity_classes: Tuple[entity.EntityClass, ...], position: vector.Vector) -> bool:
         """Check if any entity present at the given position is of the given classes
+
+        Do not really work for float position.
 
         Args:
             entity_classes (Tuple[entity.EntityClass, ...]): Type of entities to look at
-            position (entity.Position): Position in the maze
+            position (vector.Vector): Position in the maze
 
         Returns:
             bool
@@ -108,11 +111,35 @@ class Maze(observable.Observable):
                 return True
         return False
 
-    def get_entities_at(self, position: entity.Position) -> List[entity.Entity]:
-        """Return all the entities at a given position
+    def get_collision(
+        self, entity_: entity.Entity, condition: Callable[[entity.Entity], bool] = None
+    ) -> Set[entity.Entity]:
+        """Get the overlapping entities
 
         Args:
-            position (entity.Position): The position to look at
+            entity_ (entity.Entity): Entity of the maze
+            condition (Callable): A filter to apply on each entity
+
+        Returns:
+            Set[entity.Entity]: All the other entities in collision with the given one
+        """
+        colliding_entities = set()
+
+        for other in filter(condition, self.entities):
+            if other is entity_:
+                continue
+            if entity_.colliding_rect.collide_with(other.colliding_rect):
+                colliding_entities.add(other)
+
+        return colliding_entities
+
+    def get_entities_at(self, position: vector.Vector) -> List[entity.Entity]:
+        """Return all the entities at a given position
+
+        Was used to do collision. Will be remove.
+
+        Args:
+            position (vector.Vector): The position to look at
 
         Returns:
             List[entity.Entity]: Entities at the current position
@@ -124,16 +151,16 @@ class Maze(observable.Observable):
 
         return entites
 
-    def is_inside(self, position: entity.Position) -> bool:
+    def is_inside(self, position: vector.Vector) -> bool:
         """Check that the position belongs to the maze
 
         Args:
-            position (entity.Position): Position in the maze
+            position (vector.Vector): Position in the maze
 
         Returns:
             bool
         """
-        return 0 <= position.i < self.size[0] and 0 <= position.j < self.size[1]
+        return 0 <= position[0] < self.size[0] and 0 <= position[1] < self.size[1]
 
     def get_player_count(self) -> int:
         """Number of player in current maze.
@@ -190,13 +217,15 @@ class Maze(observable.Observable):
             if not representation:
                 continue
 
-            i, j = entity_.position.i, entity_.position.j
-            static_repr[i][j] = representation
+            i, j = entity_.position
+            static_repr[int(i)][int(j)] = representation
 
         # If not all players, some spawn points will still be there
         for identifier, position in self.player_spawns.items():
             representation = identifier_to_repr[identifier]
-            static_repr[position.i][position.j] = representation
+
+            i, j = position
+            static_repr[int(i)][int(j)] = representation
 
         return "\n".join(map(Maze.SEP.join, static_repr))
 
@@ -222,7 +251,7 @@ class Maze(observable.Observable):
 
                 if char in maze.PLAYER_SPAWNS:
                     identifier = maze.PLAYER_SPAWNS[char]
-                    maze.player_spawns[identifier] = entity.Position(i, j)
+                    maze.player_spawns[identifier] = vector.Vector((float(i), float(j)))
                     continue
 
                 klass: Optional[entity.EntityClass] = entity.EntityClass.representation_to_entity_class.get(char)
@@ -230,7 +259,7 @@ class Maze(observable.Observable):
                 if not klass:
                     raise MazeDescriptionError(f"Unknown identifier: '{char}' at {(i, j)}")
 
-                maze.entities.add(klass(maze, entity.Position(i, j)))
+                maze.entities.add(klass(maze, vector.Vector((float(i), float(j)))))
 
         return maze
 

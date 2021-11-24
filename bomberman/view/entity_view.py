@@ -10,6 +10,7 @@ from ..designpattern import event
 from ..designpattern import observer
 from ..model import entity
 from ..model import events
+from ..model import vector
 
 
 class EntityView(view.Sprite, observer.Observer):
@@ -30,10 +31,7 @@ class EntityView(view.Sprite, observer.Observer):
 
     def __init__(self, entity_: entity.Entity) -> None:
         image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
-        super().__init__(
-            view.load_image(self.FILE_NAME, image_total_size),
-            inflate_to_reality((entity_.position.i, entity_.position.j)),
-        )
+        super().__init__(view.load_image(self.FILE_NAME, image_total_size), inflate_to_reality(entity_.position))
         self.entity = entity_
         self.entity.add_observer(self)
         self.removing_steps = self.REMOVING_STEPS
@@ -152,10 +150,10 @@ class MovingEntityView(EntityView):
 
     direction_to_column = {
         None: 0,
-        entity.Direction.DOWN: 0,
-        entity.Direction.UP: 1,
-        entity.Direction.RIGHT: 2,
-        entity.Direction.LEFT: 3,
+        vector.Direction.DOWN: 0,
+        vector.Direction.UP: 1,
+        vector.Direction.RIGHT: 2,
+        vector.Direction.LEFT: 3,
     }
 
     def __init__(self, entity_: entity.MovingEntity) -> None:
@@ -170,7 +168,7 @@ class MovingEntityView(EntityView):
 
         if isinstance(event_, (events.MovedEntityEvent, events.LifeLossEvent)):  # XXX
             entity_ = cast(entity.MovingEntity, event_.entity)
-            self.position = inflate_to_reality((entity_.position.i, entity_.position.j))
+            self.position = inflate_to_reality(entity_.position)
             if not entity_.current_direction:  # End of a movement probably
                 self.select_sprite(self.direction_to_column[entity_.current_direction], 0)
                 return
@@ -178,13 +176,6 @@ class MovingEntityView(EntityView):
             i = self.direction_to_column[entity_.current_direction]
             j = int(entity_.try_moving_since / self.RATE) % self.COLUMNS
             self.select_sprite(i, j)
-
-            if entity_.next_position:
-                next_position = inflate_to_reality((entity_.next_position.i, entity_.next_position.j))
-                self.position = (
-                    int((self.position[0] * (100 - entity_.step) + entity_.step * next_position[0]) / 100),
-                    int((self.position[1] * (100 - entity_.step) + entity_.step * next_position[1]) / 100),
-                )
 
 
 class PlayerView(MovingEntityView):

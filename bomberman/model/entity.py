@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import enum
 import random
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Tuple
 
 from ..designpattern import observable
 from . import events
 from . import maze
 from . import timer
+from . import vector
 
 
 # TODO: Fix collision and hit
@@ -28,36 +29,6 @@ class Damage:
     def __init__(self, damage: int, type_: Type) -> None:
         self.damage = damage
         self.type = type_
-
-
-class Position:
-    """Position of entities in the maze."""
-
-    def __init__(self, i: int, j: int) -> None:
-        self.i = i
-        self.j = j
-
-    def __add__(self, other: object) -> Position:
-        if isinstance(other, Direction):
-            return Position(self.i + other.value[0], self.j + other.value[1])
-        return NotImplemented
-
-    def __str__(self) -> str:
-        return str((self.i, self.j))
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, Position):
-            return (self.i, self.j) == (other.i, other.j)
-        return NotImplemented
-
-
-class Direction(enum.Enum):
-    """Direction to follow."""
-
-    UP = (-1, 0)
-    DOWN = (1, 0)
-    RIGHT = (0, 1)
-    LEFT = (0, -1)
 
 
 class EntityClass(type):
@@ -92,7 +63,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
             If not provided, the entity will not be represented in a maze represention.
         BASE_HEALTH (int): Hp of the entity. When reaching 0, the entity is removed.
             Default to 0 (Removed at the first damage received)
-        SIZE (Tuple[int, int]): (# row, # columns) of the entity.
+        SIZE (Tuple[float, float]): (# row, # columns) of the entity.
             Default to (1, 1) (One tile large)
         VULNERABILIES (List[Damage.Type]): Vulnerabilies of the entity.
             Default to [] (Cannot take damage and is therefore invulnerable)
@@ -102,23 +73,35 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
     REPR: str = ""
     BASE_HEALTH = 0
-    SIZE = (1, 1)
+    SIZE = (1.0, 1.0)
     VULNERABILITIES: List[Damage.Type] = []
     REMOVING_DELAY: float = 0
 
-    def __init__(self, maze_: maze.Maze, position: Position) -> None:
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         """Initialise an entity in the maze.
 
         Args:
-            maze_ (Maze): The maze of the entity.
-            position (Tuple[int, int]): Row and column indexes of the entity in the maze.
-                If the entity is on several row/columns, it will indicates the top left corner of it.
+            maze_ (maze.Maze): The maze of the entity.
+            position (vector.Vector): Row and column position of the entity in the maze.
+                Always refers to the top left corner of the entity
         """
         super().__init__()
         self.maze = maze_
         self.position = position
         self.health = self.BASE_HEALTH
+        self.size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
+        self.colliding_rect = vector.Rect(self.position, self.size)
+
+    def set_position(self, position: vector.Vector):
+        """Change the position of the entity"""
+        self.position = position
+        self.colliding_rect = vector.Rect(self.position, self.size)
+
+    def set_size(self, size: vector.Vector):
+        """Change the size of the entity"""
+        self.size = size
+        self.colliding_rect = vector.Rect(self.position, self.size)
 
     def update(self, delay: float) -> None:
         """Handle time forwarding.
@@ -149,6 +132,9 @@ class Entity(observable.Observable, metaclass=EntityClass):
     def remove(self) -> None:
         self.maze.remove_entity(self)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} at {self.colliding_rect}"
+
 
 class BreakableWall(Entity):
     REPR = "B"
@@ -166,7 +152,7 @@ class Bomb(Entity):
     BASE_TIMEOUT: float = 5
     FAST_TIMEOUT: float = 2
 
-    def __init__(self, player: Player, position: Position) -> None:
+    def __init__(self, player: Player, position: vector.Vector) -> None:
         super().__init__(player.maze, position)
         self.player = player
         self.radius = player.bomb_radius
@@ -204,7 +190,9 @@ class Laser(Entity):
     REMOVING_DELAY = 0.3
     DAMAGE = 10
 
-    def __init__(self, maze_: maze.Maze, position: Position, strength: float, orientation: Laser.Orientation) -> None:
+    def __init__(
+        self, maze_: maze.Maze, position: vector.Vector, strength: float, orientation: Laser.Orientation
+    ) -> None:
         super().__init__(maze_, position)
         self.orientation = orientation
         self.removing()
@@ -222,14 +210,14 @@ class Laser(Entity):
         maze_ = bomb.maze
         maze_.add_entity(Laser(maze_, bomb.position, 1, Laser.Orientation.CENTER))
 
-        for direction in [Direction.UP, Direction.DOWN, Direction.RIGHT, Direction.LEFT]:
+        for direction in [vector.Direction.UP, vector.Direction.DOWN, vector.Direction.RIGHT, vector.Direction.LEFT]:
             position = bomb.position
-            if direction in {Direction.UP, Direction.DOWN}:
+            if direction in {vector.Direction.UP, vector.Direction.DOWN}:
                 orientation = Laser.Orientation.VERTICAL
             else:
                 orientation = Laser.Orientation.HORIZONTAL
             for dist in range(1, bomb.radius + 1):
-                position += direction
+                position += direction.vector
 
                 if not maze_.is_inside(position) or maze_.contains((SolidWall,), position):
                     # Stop generating laser for this direction we have reached a solid wall
@@ -250,30 +238,35 @@ class Laser(Entity):
 class MovingEntity(Entity):
     """Moving entity in the maze.
 
-    Let's split a tile in 100 small steps.
-    An entity will move on those step toward another tile.
+    Can only move according to a valid direction and on a plain column or row
 
     Attrs:
         BASE_SPEED (int): Base speed of the entity.
             Default to 3 blocks per second
-        BLOCKED_BY (Set[Entity]): Entities that will block thes
+        BLOCKED_BY (Set[EntityClass]): Static entities that will block the entity
+        BOUNCE_ON (Set[EntityClass]): Moving entities that will block the entity.
     """
 
     # FIXME: Collision with moving entity does not work
 
-    BASE_SPEED = 300
-    BLOCKED_BY: Set[EntityClass] = set()
+    BASE_SPEED = 3
+    BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall)
+    BOUNCE_ON: Tuple[EntityClass, ...] = ()
 
-    def __init__(self, maze_: maze.Maze, position: Position) -> None:
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
         self.speed = self.BASE_SPEED
-        self.current_direction: Optional[Direction] = None
-        self.next_direction: Optional[Direction] = None  # Could be for the player only ?
-        self.next_position: Optional[Position] = None
-        self.step = 0
-        self.try_moving_since: float = 0
+        self.current_direction: Optional[vector.Direction] = None
+        self.next_direction: Optional[vector.Direction] = None
 
-    def set_wanted_direction(self, direction: Optional[Direction]) -> None:
+        # Helper to keep a clean state
+        # Not that position = (1 - step) * prev_position + step * next_position
+        self.prev_position = self.position
+        self.next_position: Optional[vector.Vector] = None
+        self.try_moving_since = 0.0
+        self.step = 0.0
+
+    def set_wanted_direction(self, direction: Optional[vector.Direction]) -> None:
         """Set the direction the entity wants to go.
 
         If set during a current movement, the movement is first finished. Then the entity can change its direction
@@ -287,59 +280,74 @@ class MovingEntity(Entity):
         """Update the direction once a movement is done
 
         Called internally by `update`. The current direction can be updated from the next direction,
-        or this can also be ignored and set according to what happens in the maze (for instance for enemies)
+        or randomly or according to what happens in the maze (for instance for enemies)
 
         By default the next_direction is used to update the current one
         """
         self.current_direction = self.next_direction
 
     def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if not self.removing_timer.is_active:
+            self.move(delay)
+
+    def move(self, delay: float) -> None:
         """Update the position after a small delay
 
         Args:
             delay (float): Time delay since last call.
         """
-        super().update(delay)
-        if self.removing_timer.is_active:
-            return
-
-        if not self.next_position:  # There is no current movement, thus the direction can be updated directly
-            was_moving = self.current_direction != None
+        # Not moving yet, can update the position directly
+        if not self.next_position:
             self._update_direction()
-            if not self.current_direction and was_moving:
+            if not self.current_direction and self.try_moving_since:
+                self.try_moving_since = 0
                 self.changed(events.MovedEntityEvent(self))  # Stop trying to move against an obstacle
 
         if not self.current_direction:  # No direction, nothing to do
             return
 
-        # Let's move or keep moving
         self.try_moving_since += delay
 
+        # Not moving, but try to
         if not self.next_position:
-            next_position = self.position + self.current_direction
-            if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
+            assert self.position.int_part() == self.position  # Should be a int position
+            next_position = self.position + self.current_direction.vector
+            # Could use collision to prevent the usage of contains which is not really great
+            if self.maze.is_inside(next_position) and not self.maze.contains(self.BLOCKED_BY, next_position):
                 self.next_position = next_position
 
-        if not self.next_position:
+        if not self.next_position:  # Move against an obstacle
             self.changed(events.MovedEntityEvent(self))
             return
 
-        self.step += int(delay * self.speed)
-        if self.step >= 100:
-            step = self.step - 100
-            self.position = self.next_position
+        step = delay * self.speed
+        self.set_position(self.position + self.current_direction.vector * step)
+        self.step += step
+        if self.step >= 1:  # Has reached a new tile
+            remaining_delay = (self.step - 1) / self.speed
 
-            # Reset movement
+            self.set_position(self.next_position)
             self.step = 0
+            self.prev_position = self.position
             self.next_position = None
-            self.try_moving_since = 0
-            self._update_direction()
 
-            if self.current_direction:
-                next_position = self.position + self.current_direction
-                if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
-                    self.next_position = next_position
-                    self.step = step
+            self.move(remaining_delay)
+            return
+
+        # Collision (Should almost never occurs with step=1, let's see if it is enough)
+        colliding_entities = self.maze.get_collision(self, condition=lambda entity: isinstance(entity, self.BOUNCE_ON))
+        if len(colliding_entities) > 1:
+            print("WARNING: More than one entites colliding at once")
+
+        if colliding_entities:
+            self.set_position(self.position - self.current_direction.vector * step)
+            self.step -= step
+            if self.next_direction != self.current_direction:  # Stop insisting
+                self.current_direction = vector.Direction.get_opposite_direction(self.current_direction)
+                self.next_position, self.prev_position = self.prev_position, self.next_position
+                self.step = 1 - self.step
 
         self.changed(events.MovedEntityEvent(self))
 
@@ -375,7 +383,7 @@ class Player(MovingEntity):
     BASE_BOMB_RADIUS = 4
 
     def __init__(self, identifier: int) -> None:
-        super().__init__(maze.Maze((0, 0)), Position(0, 0))  # Not related to any maze at first
+        super().__init__(maze.Maze((0, 0)), vector.Vector((0.0, 0.0)))  # Not related to any maze at first
 
         self.identifier = identifier
 
@@ -412,8 +420,9 @@ class Player(MovingEntity):
         self.current_direction = None
         self.next_direction = None
         self.next_position = None
-        self.step = 0
-        self.try_moving_since = 0
+        self.prev_position = self.position
+        self.step = 0.0
+        self.try_moving_since = 0.0
 
         # Entity related
         self.removing_timer.reset()
@@ -429,12 +438,12 @@ class Player(MovingEntity):
         # TODO: Reset bonus
         self.changed(events.LifeLossEvent(self))
 
-    def register_new_maze(self, maze_: maze.Maze, position: Position) -> None:
+    def register_new_maze(self, maze_: maze.Maze, position: vector.Vector) -> None:
         """Register the player in a new maze.
 
         Args:
             maze_ (maze.Maze): The new maze to play in
-            position (Position): Starting position in the maze
+            position (vector.Vector): Starting position in the maze
         """
         self.maze = maze_
         self.position = position
@@ -446,12 +455,12 @@ class Player(MovingEntity):
         if self.bomb_count == self.bomb_capacity:
             return
 
-        if 60 < self.step < 90:
+        if 0.6 < self.step < 0.9:
             return  # FIXME: Should have some bombing delay ? to prevent two bombs dropped at the same time (59 and 91 ?)
 
-        bomb_position = self.position
-        if self.step >= 80:
-            bomb_position += self.current_direction
+        bomb_position = self.prev_position
+        if self.next_position and self.step >= 0.8:
+            bomb_position = self.next_position
 
         if self.maze.contains((Bomb,), bomb_position):
             return
@@ -464,48 +473,47 @@ class Player(MovingEntity):
 
 
 # XXX: Ugly
-Player.BLOCKED_BY = set([BreakableWall, SolidWall, Player])
+Player.BOUNCE_ON = (Player,)
 
 
 class Enemy(MovingEntity):
     """Base class for all enemies."""
 
     REMOVING_DELAY = 2
-    BASE_SPEED = 200
+    BASE_SPEED = 2
     VULNERABILITIES = [Damage.Type.BOMBS]
     ERRATIC = False  # Can randomly turn around
     # TODO: Special behavior of each entity, like sprint, turn back on the player, following him etc
 
-    def __init__(self, maze_: maze.Maze, position: Position) -> None:
-        super().__init__(maze_, position)
-
     def _update_direction(self) -> None:
-        # Could may be be unified in Enemy class
-        opposite = {
-            None: None,
-            Direction.UP: Direction.DOWN,
-            Direction.DOWN: Direction.UP,
-            Direction.RIGHT: Direction.LEFT,
-            Direction.LEFT: Direction.RIGHT,
-        }[self.current_direction]
+        if self.next_direction:  # Usually not set for enemies
+            self.current_direction = self.next_direction  # Could check direction validity
+            self.next_direction = None
+            return
 
         plausible_directions = []
-        for direction in [Direction.DOWN, Direction.UP, Direction.LEFT, Direction.RIGHT]:
-            next_position = self.position + direction
+        for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]:
+            next_position = self.position + direction.vector
             if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
                 plausible_directions.append(direction)
 
         if not plausible_directions:
             return  # Don't work for now
 
-        if not self.ERRATIC and opposite in plausible_directions and len(plausible_directions) > 1:
-            plausible_directions.remove(opposite)
+        opposite_direction: Optional[vector.Direction]
+        if self.current_direction:
+            opposite_direction = vector.Direction.get_opposite_direction(self.current_direction)
+        else:
+            opposite_direction = None
+
+        if not self.ERRATIC and opposite_direction in plausible_directions and len(plausible_directions) > 1:
+            plausible_directions.remove(opposite_direction)
 
         self.current_direction = random.choice(plausible_directions)
 
 
 # XXX: Ugly
-Enemy.BLOCKED_BY = set([BreakableWall, SolidWall, Enemy])
+Enemy.BOUNCE_ON = (Enemy,)
 
 
 class Soldier(Enemy):
@@ -524,7 +532,7 @@ class Lizzy(Enemy):
 
 class Taur(Enemy):
     REPR = "3"
-    BASE_SPEED = 300  # TODO: Improve speed estimation for all entities
+    BASE_SPEED = 3  # TODO: Improve speed estimation for all entities
 
 
 class Gunner(Enemy):

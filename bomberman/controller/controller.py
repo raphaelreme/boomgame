@@ -12,6 +12,7 @@ import pygame.event
 from ..designpattern import observer
 from ..model import entity
 from ..model import game
+from ..model import vector
 from . import control
 
 
@@ -81,10 +82,10 @@ class PlayerController:
         self.player = player
         self.player_control = control.PlayerControl.from_identifier(self.player.identifier)
         self.key_to_direction = {
-            self.player_control.up: entity.Direction.UP,
-            self.player_control.down: entity.Direction.DOWN,
-            self.player_control.right: entity.Direction.RIGHT,
-            self.player_control.left: entity.Direction.LEFT,
+            self.player_control.up: vector.Direction.UP,
+            self.player_control.down: vector.Direction.DOWN,
+            self.player_control.right: vector.Direction.RIGHT,
+            self.player_control.left: vector.Direction.LEFT,
         }
         self.direction_pressed: List[int] = []
         self.bombing = False

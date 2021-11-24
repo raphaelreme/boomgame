@@ -195,10 +195,24 @@ class Laser(Entity):
     ) -> None:
         super().__init__(maze_, position)
         self.orientation = orientation
+        self.damage = int(self.DAMAGE * strength)
         self.removing()
 
-        for entity in self.maze.get_entities_at(self.position):
-            entity.hit(Damage(int(Laser.DAMAGE * strength), Damage.Type.BOMBS))
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        # FIXME: Has to change the position to
+        # decay = abs(self.removing_timer.current - self.REMOVING_DELAY / 2)
+        # size = 1 - 2 / self.REMOVING_DELAY * decay
+        # if self.orientation == Laser.Orientation.CENTER:
+        #     self.set_size((size, size))
+        # elif self.orientation == Laser.Orientation.HORIZONTAL:
+        #     self.set_size((size, 1.))
+        # else:  # Vertical
+        #     self.set_size((1., size))
+
+        for entity in self.maze.get_collision(self):
+            entity.hit(Damage(self.damage, Damage.Type.BOMBS))
 
     @staticmethod
     def generate_from_bomb(bomb: Bomb) -> None:

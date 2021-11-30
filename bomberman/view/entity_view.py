@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import List, Tuple, cast
 
+import pygame.surface
+import pygame.rect
+
 from . import TILE_SIZE, inflate_to_reality
 from . import view
 from ..designpattern import event
@@ -148,7 +151,7 @@ class MovingEntityView(EntityView):
 
     RATE = 0.1
 
-    direction_to_column = {
+    direction_to_row = {
         None: 0,
         vector.Direction.DOWN: 0,
         vector.Direction.UP: 1,
@@ -158,7 +161,7 @@ class MovingEntityView(EntityView):
 
     def __init__(self, entity_: entity.MovingEntity) -> None:
         super().__init__(entity_)
-        i = self.direction_to_column[entity_.current_direction]
+        i = self.direction_to_row[entity_.current_direction]
         self.select_sprite(i, 0)
 
     def notify(self, event_: event.Event) -> None:
@@ -170,10 +173,10 @@ class MovingEntityView(EntityView):
             entity_ = cast(entity.MovingEntity, event_.entity)
             self.position = inflate_to_reality(entity_.position)
             if not entity_.current_direction:  # End of a movement probably
-                self.select_sprite(self.direction_to_column[entity_.current_direction], 0)
+                self.select_sprite(self.direction_to_row[entity_.current_direction], 0)
                 return
 
-            i = self.direction_to_column[entity_.current_direction]
+            i = self.direction_to_row[entity_.current_direction]
             j = int(entity_.try_moving_since / self.RATE) % self.COLUMNS
             self.select_sprite(i, j)
 
@@ -183,10 +186,28 @@ class PlayerView(MovingEntityView):
     ROWS = 5
     COLUMNS = 8
     REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 10 + [(4, 1)] * 5
+    SHIELD = "shield.png"
+    SHIELD_ROWS = 1
+    SHIELD_COLUMNS = 3
+    SHIELD_TWINKLE = 1.5
+    SHIELD_RATE = 0.1
+
+    direction_to_shield = {
+        None: 0,
+        vector.Direction.UP: 0,
+        vector.Direction.DOWN: 0,
+        vector.Direction.RIGHT: 1,
+        vector.Direction.LEFT: 2,
+    }
 
     def __init__(self, entity_: entity.Player) -> None:
         self.FILE_NAME = f"player{entity_.identifier}.png"  # pylint: disable = invalid-name
         super().__init__(entity_)
+        self.entity: entity.Player
+
+        shield_size = (self.SPRITE_SIZE[0] * self.SHIELD_COLUMNS, self.SPRITE_SIZE[1] * self.SHIELD_ROWS)
+        self.shield_sprite = view.load_image(self.SHIELD, shield_size)
+        self.shield_sprite.set_alpha(128)
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
@@ -196,6 +217,26 @@ class PlayerView(MovingEntityView):
         if isinstance(event_, events.LifeLossEvent):
             # In case of a life loss, let's update the sprite like it would be done when moving
             super().notify(events.MovedEntityEvent(event_.entity))
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        if not self.entity.shield.is_active:
+            return super().display(surface)
+
+        if self.entity.shield.current < self.SHIELD_TWINKLE:
+            if int(self.entity.shield.current / self.SHIELD_RATE) % 2:
+                return super().display(surface)
+
+        # Display shield
+        # TODO: Could use the player as a mask for the shield ?
+        image = pygame.surface.Surface(self.SPRITE_SIZE).convert_alpha()
+        image.fill((0, 0, 0, 0))
+        image.blit(self.sprite_image, (0, 0), self.current_sprite)
+        shield_rect = pygame.rect.Rect(
+            (self.direction_to_shield[self.entity.current_direction] * self.SPRITE_SIZE[0], 0 * self.SPRITE_SIZE[1]),
+            self.SPRITE_SIZE,
+        )
+        image.blit(self.shield_sprite, (0, 0), shield_rect)
+        surface.blit(image, self.position)
 
 
 class EnemyView(MovingEntityView):

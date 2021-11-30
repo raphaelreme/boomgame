@@ -115,16 +115,20 @@ class Entity(observable.Observable, metaclass=EntityClass):
             else:
                 self.changed(events.RemovingEntityEvent(self))
 
-    def hit(self, damage: Damage) -> None:
+    def hit(self, damage: Damage) -> bool:
         if self.removing_timer.is_active:
-            return
+            return False
 
-        if damage.type in self.VULNERABILITIES:
-            self.health = max(0, self.health - damage.damage)
-            self.changed(events.HitEntityEvent(self))
+        if damage.type not in self.VULNERABILITIES:
+            return False
 
-            if self.health == 0:
-                self.removing()
+        self.health = max(0, self.health - damage.damage)
+        self.changed(events.HitEntityEvent(self))
+
+        if self.health == 0:
+            self.removing()
+
+        return True
 
     def removing(self) -> None:
         self.removing_timer.start(self.REMOVING_DELAY)
@@ -380,9 +384,11 @@ class Player(MovingEntity):
         BASE_BOMB_CAPACITY, bomb_capacity (int, int): Number of bombs that can be dropped
             at the same time
         BASE_BOMB_RADIUS, bomb_radius (int, int): Size of the bomb explosion
+        NEW_LIFE_SHIELD (float): Shield time when resurrected
+        HIT_SHIELD (float): Shield when hit
         fast (bool): If the player speed is increased
         fast_bomb (bool): Bombs explodes faster
-        shield (bool): The player has no vulnerabilities
+        shield (timer.Timer): A timer when the player is invulnerable
         score (int): Current score of the player
     """
 
@@ -395,6 +401,8 @@ class Player(MovingEntity):
     BASE_LIFE = 3
     BASE_BOMB_CAPACITY = 5
     BASE_BOMB_RADIUS = 4
+    NEW_LIFE_SHIELD = 3.0
+    HIT_SHIELD = 1.0
 
     def __init__(self, identifier: int) -> None:
         super().__init__(maze.Maze((0, 0)), vector.Vector((0.0, 0.0)))  # Not related to any maze at first
@@ -406,7 +414,7 @@ class Player(MovingEntity):
         self.bomb_radius = self.BASE_BOMB_RADIUS
         self.fast = False
         self.fast_bomb = False
-        self.shield = False
+        self.shield = timer.Timer(increase=False)
 
         # Init other import stuff
         self.life = self.BASE_LIFE
@@ -420,7 +428,7 @@ class Player(MovingEntity):
 
         # Player related
         self.fast = False
-        self.shield = False
+        self.shield.reset()
         self.bomb_count = 0
 
         # Movement related
@@ -437,7 +445,8 @@ class Player(MovingEntity):
     def new_life(self) -> None:
         """Reset some stuff when a player loses a life"""
         self.fast = False
-        self.shield = False
+        self.shield.reset()
+        self.shield.start(self.NEW_LIFE_SHIELD)
         # Reset bonus
 
         self.removing_timer.reset()
@@ -485,6 +494,23 @@ class Player(MovingEntity):
 
     def bomb_explodes(self) -> None:
         self.bomb_count -= 1
+
+    def hit(self, damage: Damage) -> bool:
+        if self.shield.is_active:
+            return False
+
+        if not super().hit(damage):
+            return False
+
+        if self.health:
+            self.shield.start(self.HIT_SHIELD)
+        return True
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if self.shield.update(delay):
+            self.shield.reset()
 
 
 # XXX: Ugly

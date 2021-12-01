@@ -525,6 +525,8 @@ class Enemy(MovingEntity):
     BASE_SPEED = 2
     VULNERABILITIES = [Damage.Type.BOMBS]
     ERRATIC = False  # Can randomly turn around
+    COLLISION_DAMAGE = 1
+    BULLET_DAMAGE = 1
     # TODO: Special behavior of each entity, like sprint, turn back on the player, following him etc
 
     def _update_direction(self) -> None:
@@ -552,6 +554,15 @@ class Enemy(MovingEntity):
             plausible_directions.remove(opposite_direction)
 
         self.current_direction = random.choice(plausible_directions)
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if self.removing_timer.is_active:
+            return
+
+        for entity in self.maze.get_collision(self):
+            entity.hit(Damage(self.COLLISION_DAMAGE, Damage.Type.ENEMIES))
 
 
 # XXX: Ugly

@@ -470,7 +470,8 @@ class Player(MovingEntity):
             position (vector.Vector): Starting position in the maze
         """
         self.maze = maze_
-        self.position = position
+        self.set_position(position)
+        self.reset()
 
     def bombs(self) -> None:
         if self.removing_timer.is_active:

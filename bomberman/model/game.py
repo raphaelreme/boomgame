@@ -84,7 +84,6 @@ class GameModel(observable.Observable):
         # assert self.maze.size == self.MAZE_SIZE, f"This game only supports maze with a size {self.MAZE_SIZE}"
 
         for player in self.players.values():
-            player.reset()
             if player.life:
                 self.maze.add_player(player)
 

@@ -66,8 +66,8 @@ class Maze(observable.Observable):
         Args:
             entity_ (entity.Entity): The entity to register.
         """
-        if not self.is_inside(entity_.position):
-            raise OutOfMazeError(f"Try to add {entity_} at {entity_.position}. Out of boundaries: {self.size}")
+        if not self.is_inside(entity_.colliding_rect()):
+            raise OutOfMazeError(f"Try to add {entity_}. Out of boundaries: {self.size}")
 
         self.entities.add(entity_)
         self.changed(events.NewEntityEvent(entity_))
@@ -94,73 +94,34 @@ class Maze(observable.Observable):
         player.register_new_maze(self, position)
         self.add_entity(player)
 
-    def contains(self, entity_classes: Tuple[entity.EntityClass, ...], position: vector.Vector) -> bool:
-        """Check if any entity present at the given position is of the given classes
-
-        Do not really work for float position.
-
-        Args:
-            entity_classes (Tuple[entity.EntityClass, ...]): Type of entities to look at
-            position (vector.Vector): Position in the maze
-
-        Returns:
-            bool
-        """
-        for entity_ in self.entities:
-            if entity_.position == position and isinstance(entity_, entity_classes):
-                return True
-        return False
-
-    def get_collision(
-        self, entity_: entity.Entity, condition: Callable[[entity.Entity], bool] = None
-    ) -> Set[entity.Entity]:
+    def get_collision(self, rect: vector.Rect, condition: Callable[[entity.Entity], bool] = None) -> Set[entity.Entity]:
         """Get the overlapping entities
 
         Args:
-            entity_ (entity.Entity): Entity of the maze
+            entity_ (vector.Rect): A rect to look at
             condition (Callable): A filter to apply on each entity
 
         Returns:
-            Set[entity.Entity]: All the other entities in collision with the given one
+            Set[entity.Entity]: All the other entities in collision with the given rect
         """
         colliding_entities = set()
 
-        for other in filter(condition, self.entities):
-            if other is entity_:
-                continue
-            if entity_.colliding_rect.collide_with(other.colliding_rect):
-                colliding_entities.add(other)
+        for entity_ in filter(condition, self.entities):
+            if rect.collide_with(entity_.colliding_rect()):
+                colliding_entities.add(entity_)
 
         return colliding_entities
 
-    def get_entities_at(self, position: vector.Vector) -> List[entity.Entity]:
-        """Return all the entities at a given position
-
-        Was used to do collision. Will be remove.
+    def is_inside(self, rect: vector.Rect) -> bool:
+        """Check that the rect belongs to the maze
 
         Args:
-            position (vector.Vector): The position to look at
-
-        Returns:
-            List[entity.Entity]: Entities at the current position
-        """
-        entites = []
-        for entity_ in self.entities:
-            if entity_.position == position:
-                entites.append(entity_)
-
-        return entites
-
-    def is_inside(self, position: vector.Vector) -> bool:
-        """Check that the position belongs to the maze
-
-        Args:
-            position (vector.Vector): Position in the maze
+            rect (vector.Rect): Rect in the maze
 
         Returns:
             bool
         """
-        return 0 <= position[0] < self.size[0] and 0 <= position[1] < self.size[1]
+        return vector.Rect(vector.Vector((0.0, 0.0)), vector.Vector(self.size)).contains(rect)
 
     def get_player_count(self) -> int:
         """Number of player in current maze.

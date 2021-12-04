@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import enum
+import math
 import random
 from typing import Dict, List, Optional, Tuple
 
@@ -11,9 +12,6 @@ from . import events
 from . import maze
 from . import timer
 from . import vector
-
-
-# TODO: Fix collision and hit
 
 
 class Damage:
@@ -83,7 +81,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         Args:
             maze_ (maze.Maze): The maze of the entity.
             position (vector.Vector): Row and column position of the entity in the maze.
-                Always refers to the top left corner of the entity
+                Always refers to the top left corner of the image of the entity
         """
         super().__init__()
         self.maze = maze_
@@ -91,17 +89,22 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self.health = self.BASE_HEALTH
         self.size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
-        self.colliding_rect = vector.Rect(self.position, self.size)
 
-    def set_position(self, position: vector.Vector):
-        """Change the position of the entity"""
-        self.position = position
-        self.colliding_rect = vector.Rect(self.position, self.size)
+    def colliding_rect(self) -> vector.Rect:
+        """Build the colliding rect of the entity
 
-    def set_size(self, size: vector.Vector):
-        """Change the size of the entity"""
-        self.size = size
-        self.colliding_rect = vector.Rect(self.position, self.size)
+        Given the current approach, the image size is a tuple of integer.
+        Entity with a float size have an int size image centered on the entity.
+        And the position of the entity is the top left position of the image.
+
+        Returns:
+            vector.Rect: The colliding rect of the entity
+        """
+        return self._build_colliding_rect(self.position, self.size)
+
+    @staticmethod
+    def _build_colliding_rect(position: vector.Vector, size: vector.Vector) -> vector.Rect:
+        return vector.Rect(position + (size.apply(math.ceil) - size) * 0.5, size)
 
     def update(self, delay: float) -> None:
         """Handle time forwarding.
@@ -137,7 +140,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self.maze.remove_entity(self)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__} at {self.colliding_rect}"
+        return f"{self.__class__.__name__} at {self.colliding_rect()}"
 
 
 class BreakableWall(Entity):
@@ -177,7 +180,6 @@ class Bomb(Entity):
 
     def removing(self) -> None:
         super().removing()
-        # Bomb explosion
 
         self.player.bomb_explodes()
         Laser.generate_from_bomb(self)
@@ -205,17 +207,20 @@ class Laser(Entity):
     def update(self, delay: float) -> None:
         super().update(delay)
 
-        # FIXME: Has to change the position to
-        # decay = abs(self.removing_timer.current - self.REMOVING_DELAY / 2)
-        # size = 1 - 2 / self.REMOVING_DELAY * decay
-        # if self.orientation == Laser.Orientation.CENTER:
-        #     self.set_size((size, size))
-        # elif self.orientation == Laser.Orientation.HORIZONTAL:
-        #     self.set_size((size, 1.))
-        # else:  # Vertical
-        #     self.set_size((1., size))
+        if self.removing_timer.is_done:
+            return
 
-        for entity in self.maze.get_collision(self):
+        decay = abs(self.removing_timer.current - self.REMOVING_DELAY / 2)
+        size = 1 - 2 / self.REMOVING_DELAY * decay
+
+        if self.orientation == Laser.Orientation.CENTER:
+            self.size = vector.Vector((size, size))
+        elif self.orientation == Laser.Orientation.HORIZONTAL:
+            self.size = vector.Vector((size, 1.0))
+        else:  # Vertical
+            self.size = vector.Vector((1.0, size))
+
+        for entity in self.maze.get_collision(self.colliding_rect()):
             entity.hit(Damage(self.damage, Damage.Type.BOMBS))
 
     @staticmethod
@@ -235,16 +240,19 @@ class Laser(Entity):
             else:
                 orientation = Laser.Orientation.HORIZONTAL
             for dist in range(1, bomb.radius + 1):
-                position += direction.vector
+                position += direction.vector  # Int position
+                laser_rect = vector.Rect(position, bomb.size)
 
-                if not maze_.is_inside(position) or maze_.contains((SolidWall,), position):
+                if not maze_.is_inside(laser_rect) or maze_.get_collision(
+                    laser_rect, lambda entity: isinstance(entity, SolidWall)
+                ):
                     # Stop generating laser for this direction we have reached a solid wall
                     break
 
                 alpha = dist / bomb.radius
                 strength = 0.25 * alpha + (1 - alpha)  # The furthest the weakest
 
-                if maze_.contains((BreakableWall,), position):
+                if maze_.get_collision(laser_rect, lambda entity: isinstance(entity, BreakableWall)):
                     # Lasers can go through breakable wall only if the bomb is close to it
                     if dist == 1:
                         maze_.add_entity(Laser(maze_, position, strength, orientation))
@@ -264,8 +272,6 @@ class MovingEntity(Entity):
         BLOCKED_BY (Set[EntityClass]): Static entities that will block the entity
         BOUNCE_ON (Set[EntityClass]): Moving entities that will block the entity.
     """
-
-    # FIXME: Collision with moving entity does not work
 
     BASE_SPEED = 3
     BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall)
@@ -332,8 +338,7 @@ class MovingEntity(Entity):
         if not self.next_position:
             assert self.position.int_part() == self.position  # Should be a int position
             next_position = self.position + self.current_direction.vector
-            # Could use collision to prevent the usage of contains which is not really great
-            if self.maze.is_inside(next_position) and not self.maze.contains(self.BLOCKED_BY, next_position):
+            if self._valid_next_position(next_position):
                 self.next_position = next_position
 
         if not self.next_position:  # Move against an obstacle
@@ -341,12 +346,12 @@ class MovingEntity(Entity):
             return
 
         step = delay * self.speed
-        self.set_position(self.position + self.current_direction.vector * step)
+        self.position += self.current_direction.vector * step
         self.step += step
         if self.step >= 1:  # Has reached a new tile
             remaining_delay = (self.step - 1) / self.speed
 
-            self.set_position(self.next_position)
+            self.position = self.next_position
             self.step = 0
             self.prev_position = self.position
             self.next_position = None
@@ -355,12 +360,14 @@ class MovingEntity(Entity):
             return
 
         # Collision (Should almost never occurs with step=1, let's see if it is enough)
-        colliding_entities = self.maze.get_collision(self, condition=lambda entity: isinstance(entity, self.BOUNCE_ON))
+        colliding_entities = self.maze.get_collision(
+            self.colliding_rect(), lambda entity: isinstance(entity, self.BOUNCE_ON) and entity is not self
+        )
         if len(colliding_entities) > 1:
             print("WARNING: More than one entites colliding at once")
 
         if colliding_entities:
-            self.set_position(self.position - self.current_direction.vector * step)
+            self.position -= self.current_direction.vector * step
             self.step -= step
             if self.next_direction != self.current_direction:  # Stop insisting
                 self.current_direction = vector.Direction.get_opposite_direction(self.current_direction)
@@ -368,6 +375,13 @@ class MovingEntity(Entity):
                 self.step = 1 - self.step
 
         self.changed(events.MovedEntityEvent(self))
+
+    def _valid_next_position(self, next_position: vector.Vector) -> bool:
+        rect = self._build_colliding_rect(next_position, self.size)
+
+        return self.maze.is_inside(rect) and not self.maze.get_collision(
+            rect, lambda entity: isinstance(entity, self.BLOCKED_BY)
+        )
 
 
 class Player(MovingEntity):
@@ -470,7 +484,7 @@ class Player(MovingEntity):
             position (vector.Vector): Starting position in the maze
         """
         self.maze = maze_
-        self.set_position(position)
+        self.position = position
         self.reset()
 
     def bombs(self) -> None:
@@ -487,10 +501,12 @@ class Player(MovingEntity):
         if self.next_position and self.step >= 0.8:
             bomb_position = self.next_position
 
-        if self.maze.contains((Bomb,), bomb_position):
+        if self.maze.get_collision(
+            self._build_colliding_rect(bomb_position, self.size), lambda entity: isinstance(entity, Bomb)
+        ):  # Don't drop a bomb if one is already here
             return
-        bomb = Bomb(self, bomb_position)
-        self.maze.add_entity(bomb)
+
+        self.maze.add_entity(Bomb(self, bomb_position))
         self.bomb_count += 1
 
     def bomb_explodes(self) -> None:
@@ -538,7 +554,7 @@ class Enemy(MovingEntity):
         plausible_directions = []
         for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]:
             next_position = self.position + direction.vector
-            if self.maze.is_inside(next_position) and not self.maze.contains(tuple(self.BLOCKED_BY), next_position):
+            if self._valid_next_position(next_position):
                 plausible_directions.append(direction)
 
         if not plausible_directions:

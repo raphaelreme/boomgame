@@ -8,7 +8,7 @@ with pygame directly managing everything)
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Callable, Tuple
 import enum
 
 
@@ -42,6 +42,10 @@ class Vector(Tuple[float, float]):
 
     def __rsub__(self, other: object) -> Vector:
         return -1 * (self - other)
+
+    def apply(self, func: Callable[[float], float]) -> Vector:
+        """Apply a function to all the vector"""
+        return Vector((func(x) for x in self))
 
     def int_part(self) -> Vector:
         """Return the integer part of the vector"""

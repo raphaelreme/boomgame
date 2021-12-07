@@ -57,7 +57,7 @@ class EntityView(view.Sprite, observer.Observer):
             if not self.entity.REMOVING_DELAY or not self.removing_steps:
                 return
 
-            step = 1 - max(self.entity.removing_timer.current, 0) / self.entity.removing_timer.total
+            step = 1 - max(self.entity.removing_timer.current, 1e-6) / self.entity.removing_timer.total
             self.select_sprite(*self.removing_steps[int(step * len(self.removing_steps))])
 
     @staticmethod

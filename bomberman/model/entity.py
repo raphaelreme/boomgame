@@ -337,9 +337,8 @@ class MovingEntity(Entity):
         # Not moving, but try to
         if not self.next_position:
             assert self.position.int_part() == self.position  # Should be a int position
-            next_position = self.position + self.current_direction.vector
-            if self._valid_next_position(next_position):
-                self.next_position = next_position
+            if self._valid_next_direction(self.current_direction):
+                self.next_position = self.position + self.current_direction.vector
 
         if not self.next_position:  # Move against an obstacle
             self.changed(events.MovedEntityEvent(self))
@@ -349,7 +348,10 @@ class MovingEntity(Entity):
         self.position += self.current_direction.vector * step
         self.step += step
         if self.step >= 1:  # Has reached a new tile
-            remaining_delay = (self.step - 1) / self.speed
+            if self.speed == 0:
+                remaining_delay = 0.0
+            else:
+                remaining_delay = (self.step - 1) / self.speed
 
             self.position = self.next_position
             self.step = 0
@@ -370,18 +372,35 @@ class MovingEntity(Entity):
             self.position -= self.current_direction.vector * step
             self.step -= step
             if self.next_direction != self.current_direction:  # Stop insisting
-                self.current_direction = vector.Direction.get_opposite_direction(self.current_direction)
-                self.next_position, self.prev_position = self.prev_position, self.next_position
-                self.step = 1 - self.step
+                self._switch_direction()
 
         self.changed(events.MovedEntityEvent(self))
 
-    def _valid_next_position(self, next_position: vector.Vector) -> bool:
+    def _switch_direction(self) -> None:
+        if self.current_direction:
+            self.current_direction = vector.Direction.get_opposite_direction(self.current_direction)
+            self.next_position, self.prev_position = self.prev_position, self.next_position
+            self.step = 1 - self.step
+
+    def _valid_next_direction(self, next_direction: vector.Direction) -> bool:
+        """A direction is valid:
+        - It leads to a position inside the maze
+        - There is no blocking entities on the path
+        - The entity won't bonce immediately
+        """
+        next_position = self.position + next_direction.vector
         rect = self._build_colliding_rect(next_position, self.size)
 
-        return self.maze.is_inside(rect) and not self.maze.get_collision(
-            rect, lambda entity: isinstance(entity, self.BLOCKED_BY)
+        valid = self.maze.is_inside(rect)
+        valid = valid and not self.maze.get_collision(rect, lambda entity: isinstance(entity, self.BLOCKED_BY))
+
+        next_position = self.position + 0.1 * next_direction.vector
+        rect = self._build_colliding_rect(next_position, self.size)
+        valid = valid and not self.maze.get_collision(
+            rect, lambda entity: isinstance(entity, self.BOUNCE_ON) and entity != self
         )
+
+        return valid
 
 
 class Player(MovingEntity):
@@ -533,6 +552,8 @@ class Player(MovingEntity):
 # XXX: Ugly
 Player.BOUNCE_ON = (Player,)
 
+# TODO: improve speed and damage estimation
+
 
 class Enemy(MovingEntity):
     """Base class for all enemies."""
@@ -541,9 +562,16 @@ class Enemy(MovingEntity):
     BASE_SPEED = 2
     VULNERABILITIES = [Damage.Type.BOMBS]
     ERRATIC = False  # Can randomly turn around
-    COLLISION_DAMAGE = 1
-    BULLET_DAMAGE = 1
-    # TODO: Special behavior of each entity, like sprint, turn back on the player, following him etc
+    CHASE = False  # Chase the player
+    DAMAGE = 1
+    BULLET_CLASS: Optional[EntityClass] = None
+    FIRING_DELAY = 0.25
+    RELOADING_DELAY = 1.0
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self.reload_timer = timer.Timer()
+        self.firing_timer = timer.Timer()
 
     def _update_direction(self) -> None:
         if self.next_direction:  # Usually not set for enemies
@@ -553,12 +581,25 @@ class Enemy(MovingEntity):
 
         plausible_directions = []
         for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]:
-            next_position = self.position + direction.vector
-            if self._valid_next_position(next_position):
+            if self._valid_next_direction(direction):
                 plausible_directions.append(direction)
 
         if not plausible_directions:
-            return  # Don't work for now
+            return
+
+        if self.CHASE:
+            best_direction = None
+            best_distance = None
+            for direction in plausible_directions:
+                player_distance = self._check_player_on(direction)
+                if player_distance is not None:
+                    if best_distance is None or best_distance > player_distance:
+                        best_distance = player_distance
+                        best_direction = direction
+
+            if best_direction and best_distance != 0:  # < 1 ?
+                self.current_direction = best_direction
+                return
 
         opposite_direction: Optional[vector.Direction]
         if self.current_direction:
@@ -574,11 +615,80 @@ class Enemy(MovingEntity):
     def update(self, delay: float) -> None:
         super().update(delay)
 
+        if self.firing_timer.update(delay):
+            self.firing_timer.reset()
+            self.speed = self.BASE_SPEED
+
+        if self.reload_timer.update(delay):
+            self.reload_timer.reset()
+
         if self.removing_timer.is_active:
             return
 
-        for entity in self.maze.get_collision(self):
-            entity.hit(Damage(self.COLLISION_DAMAGE, Damage.Type.ENEMIES))
+        for entity in self.maze.get_collision(self.colliding_rect()):
+            entity.hit(Damage(self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
+
+        if self.current_direction:
+            distance = self._check_player_on(self.current_direction)
+            if distance is not None and not self.reload_timer.is_active:
+                self.attack(distance)
+
+    def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
+        """Check if there is a player on the given direction
+
+        Args:
+            direction (vector.Direction): Direction to check
+
+        Returns:
+            Optional[float]: Distance of the player or None if no player is found
+        """
+        distance = -1.0
+        player = None
+        size = vector.Vector((0.75, 0.75))  # Narrow
+        position = self.position
+        rect = self._build_colliding_rect(position, size)
+        while not player and self.maze.is_inside(rect):
+            distance += 1
+            for entity in self.maze.get_collision(rect):
+                if isinstance(entity, Player):
+                    if not entity.removing_timer.is_active:
+                        player = entity
+                        break
+                if isinstance(entity, (SolidWall, BreakableWall)):
+                    return None
+
+            position += direction.vector
+            rect = self._build_colliding_rect(position, size)
+
+        if not player:
+            return None
+
+        if distance > 0:
+            return distance
+
+        # When the distance is 0, we have to be more precise
+        true_direction = player.position - self.position  # Direction to follow to match the player position
+        distance = -sum(true_direction * direction.vector)  # < 0 if the direction match
+
+        return distance
+
+    def attack(self, distance: float) -> None:
+        """Attack a player at a given distance
+
+        Default behavior: Shot a bullet in the current direction
+
+        Args:
+            distance (float): Distance of the player (Used with Taur and Smouldier)
+        """
+        if not self.BULLET_CLASS:
+            return
+
+        direction = self.current_direction if self.current_direction else vector.Direction.DOWN
+        self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))
+        self.firing_timer.reset()
+        self.firing_timer.start(self.FIRING_DELAY)
+        self.reload_timer.start(self.RELOADING_DELAY)
+        self.speed = 0
 
 
 # XXX: Ugly
@@ -601,28 +711,166 @@ class Lizzy(Enemy):
 
 class Taur(Enemy):
     REPR = "3"
-    BASE_SPEED = 3  # TODO: Improve speed estimation for all entities
+    BASE_SPEED = 3
 
 
 class Gunner(Enemy):
     REPR = "4"
+    RELOADING_DELAY = 0.125
 
 
 class Thing(Enemy):
     REPR = "5"
+    CHASE = True
 
 
 class Ghost(Enemy):
     REPR = "6"
+    CHASE = True
 
 
 class Smoulder(Enemy):
     REPR = "7"
+    CHASE = True
+    RELOADING_DELAY = 0.2
+
+    def attack(self, distance: float) -> None:
+        if distance <= 4:
+            super().attack(distance)
 
 
 class Skully(Enemy):
     REPR = "8"
+    CHASE = True
+    RELOADING_DELAY = 0.125
 
 
 class Giggler(Enemy):
     REPR = "9"
+    CHASE = True
+
+
+class Bullet(Entity):
+    """Moving entity with a single direction.
+
+    Bullets can have non standard direction (like Boss bullets)
+    """
+
+    REMOVING_DELAY = 0.25
+    BASE_SPEED = 3.5
+    BLOCKED_BY = (SolidWall, BreakableWall, Enemy, Player)
+    DAMAGE = 1
+
+    def __init__(self, enemy: Enemy, direction: vector.Vector) -> None:
+        super().__init__(enemy.maze, enemy.position)
+        self.enemy = enemy
+        self.display_direction = self.enemy.current_direction  # Only used for display
+        self.direction = direction
+        self.position += direction * 0.5
+        self.speed = self.BASE_SPEED
+        self.initial_position = self.enemy.position
+        self.blocked = False
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if not self.blocked:
+            self.position += self.speed * delay * self.direction
+
+        if not self.maze.is_inside(self.colliding_rect()):
+            self.blocked = True
+
+        # Check collision
+        colliding_entities = self.maze.get_collision(self.colliding_rect())
+
+        for entity in colliding_entities:
+            if isinstance(entity, self.BLOCKED_BY) and entity != self.enemy:
+                self.blocked = True
+            entity.hit(Damage(self.DAMAGE, Damage.Type.ENEMIES))
+
+        self.changed(events.MovedEntityEvent(self))
+
+        if self.blocked and not self.removing_timer.is_active:
+            self.removing()
+
+
+class Shot(Bullet):
+    BASE_SPEED = 3.5
+    DAMAGE = 1
+    SIZE = (0.25, 0.25)
+
+
+Soldier.BULLET_CLASS = Shot
+Sarge.BULLET_CLASS = Shot
+
+
+class Fireball(Bullet):
+    BASE_SPEED = 3
+    DAMAGE = 2
+    SIZE = (0.4, 0.4)
+
+
+Lizzy.BULLET_CLASS = Fireball
+
+
+class MGShot(Bullet):
+    BASE_SPEED = 7
+    DAMAGE = 1
+    SIZE = (0.3, 0.3)
+
+
+Gunner.BULLET_CLASS = MGShot
+
+
+class Lightbolt(Bullet):
+    BASE_SPEED = 3.5
+    DAMAGE = 2
+    SIZE = (0.4, 0.4)
+
+
+Thing.BULLET_CLASS = Lightbolt
+
+
+class Flame(Bullet):
+    REMOVING_DELAY = 1
+    BASE_SPEED = 3.5
+    DAMAGE = 2
+    SIZE = (0.4, 0.4)
+
+    def __init__(self, enemy: Enemy, direction: vector.Vector) -> None:
+        super().__init__(enemy, direction)
+        self.removing()
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if self.removing_timer.is_done:
+            return
+
+        t = self.removing_timer.current / self.removing_timer.total
+        min_size = self.SIZE[0]
+        max_size = 1
+        size = t * min_size + (1 - t) * max_size
+
+        self.size = vector.Vector((size, size))
+
+
+Smoulder.BULLET_CLASS = Flame
+
+
+class Plasma(Bullet):
+    BASE_SPEED = 7
+    DAMAGE = 3
+    SIZE = (0.4, 0.4)
+
+
+Skully.BULLET_CLASS = Plasma
+
+
+class Magma(Bullet):
+    BASE_SPEED = 4
+    DAMAGE = 4
+    SIZE = (0.8, 0.8)
+
+
+Giggler.BULLET_CLASS = Magma

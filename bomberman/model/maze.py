@@ -67,7 +67,7 @@ class Maze(observable.Observable):
             entity_ (entity.Entity): The entity to register.
         """
         if not self.is_inside(entity_.colliding_rect()):
-            raise OutOfMazeError(f"Try to add {entity_}. Out of boundaries: {self.size}")
+            print(f"Warning: Try to add {entity_}. Out of boundaries: {self.size}")
 
         self.entities.add(entity_)
         self.changed(events.NewEntityEvent(entity_))

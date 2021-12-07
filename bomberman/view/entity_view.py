@@ -6,6 +6,7 @@ from typing import List, Tuple, cast
 
 import pygame.surface
 import pygame.rect
+import pygame.transform
 
 from . import TILE_SIZE, inflate_to_reality
 from . import view
@@ -169,7 +170,7 @@ class MovingEntityView(EntityView):
         if event_.handled:
             return
 
-        if isinstance(event_, (events.MovedEntityEvent, events.LifeLossEvent)):  # XXX
+        if isinstance(event_, events.MovedEntityEvent):
             entity_ = cast(entity.MovingEntity, event_.entity)
             self.position = inflate_to_reality(entity_.position)
             if not entity_.current_direction:  # End of a movement probably
@@ -246,10 +247,19 @@ class EnemyView(MovingEntityView):
     ROWS = 6
     COLUMNS = 4
     REMOVING_STEPS = [(5, 0), (5, 1)] * 10
+    FIRING_ROW = 4
 
     def __init__(self, entity_: entity.Enemy) -> None:
         self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
         super().__init__(entity_)
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+
+        if isinstance(event_, events.MovedEntityEvent):
+            enemy = cast(entity.Enemy, event_.entity)
+            if enemy.firing_timer.is_active:
+                self.select_sprite(self.FIRING_ROW, self.direction_to_row[enemy.current_direction])
 
 
 class SoldierView(EnemyView):
@@ -289,4 +299,70 @@ class SkullyView(EnemyView):
 
 
 class GigglerView(EnemyView):
+    pass
+
+
+class BulletView(EntityView):
+    """Base view for bullets"""
+
+    PRIORITY = 150
+    ROWS = 1
+    COLUMNS = 5
+    REMOVING_STEPS = [(0, 1), (0, 2), (0, 3), (0, 4)]
+
+    direction_to_rotation = {
+        None: 0,
+        vector.Direction.DOWN: 0,
+        vector.Direction.UP: 180,
+        vector.Direction.RIGHT: 90,
+        vector.Direction.LEFT: 270,
+    }
+
+    def __init__(self, entity_: entity.Bullet) -> None:
+        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
+        super().__init__(entity_)
+        self.rotation = self.direction_to_rotation[entity_.display_direction]
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+        if event_.handled:
+            return
+
+        if isinstance(event_, events.MovedEntityEvent):
+            self.position = inflate_to_reality(event_.entity.position)
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        image = pygame.surface.Surface(self.SPRITE_SIZE).convert_alpha()
+        image.fill((0, 0, 0, 0))
+        image.blit(self.sprite_image, (0, 0), self.current_sprite)
+        image = pygame.transform.rotate(image, self.rotation)
+        surface.blit(image, self.position)
+
+
+class ShotView(BulletView):
+    pass
+
+
+class FireballView(BulletView):
+    pass
+
+
+class MGShotView(BulletView):
+    COLUMNS = 6
+    REMOVING_STEPS = [(0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]
+
+
+class LightboltView(BulletView):
+    pass
+
+
+class FlameView(BulletView):
+    pass
+
+
+class PlasmaView(BulletView):
+    pass
+
+
+class MagmaView(BulletView):
     pass

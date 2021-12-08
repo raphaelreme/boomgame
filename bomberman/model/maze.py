@@ -48,7 +48,7 @@ class Maze(observable.Observable):
     SEP = "|"
     VOID = " "
     PLAYER_SPAWNS = {"X": 1, "Y": 2}
-    END_DELAY = 2
+    END_DELAY = 2.0
 
     def __init__(self, size: Tuple[int, int]) -> None:
         super().__init__()

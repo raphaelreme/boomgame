@@ -38,8 +38,8 @@ class GameModel(observable.Observable):
 
     # XXX: Should maze of different sizes be allowed (Hard because the window cannot change its size easily)
     DEFAULT_MAZE_SIZE = (16, 17)
-    START_SCREEN_DELAY = 2
-    END_SCREEN_DELAY = 2
+    START_SCREEN_DELAY = 2.0
+    END_SCREEN_DELAY = 2.0
 
     def __init__(self, game_name: str, two_players: bool = False) -> None:
         super().__init__()

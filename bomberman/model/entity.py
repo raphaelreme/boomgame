@@ -155,9 +155,9 @@ class SolidWall(Entity):
 
 class Bomb(Entity):
     VULNERABILITIES = [Damage.Type.BOMBS]
-    REMOVING_DELAY = 0
-    BASE_TIMEOUT: float = 5
-    FAST_TIMEOUT: float = 2
+    REMOVING_DELAY = 0.0
+    BASE_TIMEOUT = 5.0
+    FAST_TIMEOUT = 2.0
 
     def __init__(self, player: Player, position: vector.Vector) -> None:
         super().__init__(player.maze, position)
@@ -273,7 +273,7 @@ class MovingEntity(Entity):
         BOUNCE_ON (Set[EntityClass]): Moving entities that will block the entity.
     """
 
-    BASE_SPEED = 3
+    BASE_SPEED = 3.0
     BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall)
     BOUNCE_ON: Tuple[EntityClass, ...] = ()
 
@@ -428,7 +428,7 @@ class Player(MovingEntity):
     # Has no real REPR. X and Y are used to indicates that a player can spawn here.
     # Players are added to a maze by the game itself
 
-    REMOVING_DELAY = 2
+    REMOVING_DELAY = 2.0
     VULNERABILITIES = [Damage.Type.BOMBS, Damage.Type.ENEMIES]
     BASE_HEALTH = 16
     BASE_LIFE = 3
@@ -559,8 +559,8 @@ Player.BOUNCE_ON = (Player,)
 class Enemy(MovingEntity):
     """Base class for all enemies."""
 
-    REMOVING_DELAY = 2
-    BASE_SPEED = 2
+    REMOVING_DELAY = 2.0
+    BASE_SPEED = 2.0
     VULNERABILITIES = [Damage.Type.BOMBS]
     ERRATIC = False  # Can randomly turn around
     CHASE = False  # Chase the player
@@ -707,7 +707,7 @@ class Lizzy(Enemy):
 
 class Taur(Enemy):
     REPR = "3"
-    BASE_SPEED = 3
+    BASE_SPEED = 3.0
     CHASE = True
 
     FIRING_DELAY = 0.2
@@ -754,9 +754,9 @@ class Ghost(Enemy):
     REPR = "6"
     CHASE = True
     DAMAGE = 2
-    FAST_SPEED = 7
+    FAST_SPEED = 7.0
     FIRING_DELAY = float("inf")
-    RELOADING_DELAY = 2
+    RELOADING_DELAY = 2.0
 
     def attack(self, distance: float) -> None:
         assert self.current_direction
@@ -862,7 +862,7 @@ Sarge.BULLET_CLASS = Shot
 
 
 class Fireball(Bullet):
-    BASE_SPEED = 3
+    BASE_SPEED = 3.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
 
@@ -871,7 +871,7 @@ Lizzy.BULLET_CLASS = Fireball
 
 
 class MGShot(Bullet):
-    BASE_SPEED = 7
+    BASE_SPEED = 7.0
     DAMAGE = 1
     SIZE = (0.3, 0.3)
 
@@ -889,7 +889,7 @@ Thing.BULLET_CLASS = Lightbolt
 
 
 class Flame(Bullet):
-    REMOVING_DELAY = 1
+    REMOVING_DELAY = 1.0
     BASE_SPEED = 3.5
     DAMAGE = 2
     SIZE = (0.4, 0.4)
@@ -916,7 +916,7 @@ Smoulder.BULLET_CLASS = Flame
 
 
 class Plasma(Bullet):
-    BASE_SPEED = 7
+    BASE_SPEED = 7.0
     DAMAGE = 3
     SIZE = (0.4, 0.4)
 
@@ -925,7 +925,7 @@ Skully.BULLET_CLASS = Plasma
 
 
 class Magma(Bullet):
-    BASE_SPEED = 4
+    BASE_SPEED = 4.0
     DAMAGE = 4
     SIZE = (0.8, 0.8)
 

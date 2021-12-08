@@ -553,6 +553,7 @@ class Player(MovingEntity):
 Player.BOUNCE_ON = (Player,)
 
 # TODO: improve speed and damage estimation
+# FIXME: Build a AI system for enemies rather than this ?
 
 
 class Enemy(MovingEntity):
@@ -574,11 +575,6 @@ class Enemy(MovingEntity):
         self.firing_timer = timer.Timer()
 
     def _update_direction(self) -> None:
-        if self.next_direction:  # Usually not set for enemies
-            self.current_direction = self.next_direction  # Could check direction validity
-            self.next_direction = None
-            return
-
         plausible_directions = []
         for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]:
             if self._valid_next_direction(direction):
@@ -644,7 +640,7 @@ class Enemy(MovingEntity):
         """
         distance = -1.0
         player = None
-        size = vector.Vector((0.75, 0.75))  # Narrow
+        size = vector.Vector((1.0, 1.0))
         position = self.position
         rect = self._build_colliding_rect(position, size)
         while not player and self.maze.is_inside(rect):
@@ -712,6 +708,36 @@ class Lizzy(Enemy):
 class Taur(Enemy):
     REPR = "3"
     BASE_SPEED = 3
+    CHASE = True
+
+    FIRING_DELAY = 0.2
+    RELOADING_DELAY = 0.35
+
+    def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
+        distance = super()._check_player_on(direction)
+        if distance is None or distance > 1:
+            return None
+
+        # Follow more, a bit too hard
+        # if distance < 1:
+        #     return distance
+
+        if self.current_direction:
+            if direction == vector.Direction.get_opposite_direction(self.current_direction):
+                return None
+
+        return distance
+
+    def attack(self, distance: float) -> None:
+        if distance >= 1:
+            return
+
+        if distance > 0:
+            self._switch_direction()
+
+        self.firing_timer.reset()
+        self.firing_timer.start(self.FIRING_DELAY)
+        self.reload_timer.start(self.RELOADING_DELAY)
 
 
 class Gunner(Enemy):
@@ -727,6 +753,37 @@ class Thing(Enemy):
 class Ghost(Enemy):
     REPR = "6"
     CHASE = True
+    DAMAGE = 2
+    FAST_SPEED = 7
+    FIRING_DELAY = float("inf")
+    RELOADING_DELAY = 2
+
+    def attack(self, distance: float) -> None:
+        assert self.current_direction
+
+        self.firing_timer.reset()
+        self.firing_timer.start(self.FIRING_DELAY)
+        self.reload_timer.start(self.RELOADING_DELAY)
+        self.speed = self.FAST_SPEED
+
+    def _switch_direction(self) -> None:
+        # Stop sprint if bounce on smthg
+        if self.firing_timer.is_active:
+            self.firing_timer.reset()
+            self.speed = self.BASE_SPEED
+
+        super()._switch_direction()
+
+    def _update_direction(self) -> None:
+        # Stop sprint if blocked by smthg
+        if self.firing_timer.is_active and self.current_direction:
+            if self._valid_next_direction(self.current_direction):
+                return
+            else:
+                self.firing_timer.reset()
+                self.speed = self.BASE_SPEED
+
+        super()._update_direction()
 
 
 class Smoulder(Enemy):

@@ -183,7 +183,7 @@ class MovingEntityView(EntityView):
 
 
 class PlayerView(MovingEntityView):
-    PRIORITY = 20
+    PRIORITY = 15
     ROWS = 5
     COLUMNS = 8
     REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 10 + [(4, 1)] * 5
@@ -243,7 +243,7 @@ class PlayerView(MovingEntityView):
 class EnemyView(MovingEntityView):
     """Base view class for enemies"""
 
-    PRIORITY = 15
+    PRIORITY = 20
     ROWS = 6
     COLUMNS = 4
     REMOVING_STEPS = [(5, 0), (5, 1)] * 10

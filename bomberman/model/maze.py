@@ -66,7 +66,7 @@ class Maze(observable.Observable):
         Args:
             entity_ (entity.Entity): The entity to register.
         """
-        if not self.is_inside(entity_.colliding_rect()):
+        if not self.is_inside(entity_.colliding_rect):
             print(f"Warning: Try to add {entity_}. Out of boundaries: {self.size}")
 
         self.entities.add(entity_)
@@ -107,7 +107,7 @@ class Maze(observable.Observable):
         colliding_entities = set()
 
         for entity_ in filter(condition, self.entities):
-            if rect.collide_with(entity_.colliding_rect()):
+            if rect.collide_with(entity_.colliding_rect):
                 colliding_entities.add(entity_)
 
         return colliding_entities

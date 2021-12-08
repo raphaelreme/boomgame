@@ -85,12 +85,32 @@ class Entity(observable.Observable, metaclass=EntityClass):
         """
         super().__init__()
         self.maze = maze_
-        self.position = position
+        self._position = position
         self.health = self.BASE_HEALTH
-        self.size = vector.Vector(self.SIZE)
+        self._size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
+        self.colliding_rect = self._build_colliding_rect(self.position, self.size)
 
-    def colliding_rect(self) -> vector.Rect:
+    @property
+    def position(self) -> vector.Vector:
+        return self._position
+
+    @position.setter
+    def position(self, position: vector.Vector) -> None:
+        self._position = position
+        self.colliding_rect = self._build_colliding_rect(self._position, self._size)
+
+    @property
+    def size(self) -> vector.Vector:
+        return self._size
+
+    @size.setter
+    def size(self, size: vector.Vector) -> None:
+        self._size = size
+        self.colliding_rect = self._build_colliding_rect(self._position, self._size)
+
+    @staticmethod
+    def _build_colliding_rect(position: vector.Vector, size: vector.Vector) -> vector.Rect:
         """Build the colliding rect of the entity
 
         Given the current approach, the image size is a tuple of integer.
@@ -100,10 +120,6 @@ class Entity(observable.Observable, metaclass=EntityClass):
         Returns:
             vector.Rect: The colliding rect of the entity
         """
-        return self._build_colliding_rect(self.position, self.size)
-
-    @staticmethod
-    def _build_colliding_rect(position: vector.Vector, size: vector.Vector) -> vector.Rect:
         return vector.Rect(position + (size.apply(math.ceil) - size) * 0.5, size)
 
     def update(self, delay: float) -> None:
@@ -140,7 +156,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self.maze.remove_entity(self)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__} at {self.colliding_rect()}"
+        return f"{self.__class__.__name__} at {self.colliding_rect}"
 
 
 class BreakableWall(Entity):
@@ -220,7 +236,7 @@ class Laser(Entity):
         else:  # Vertical
             self.size = vector.Vector((1.0, size))
 
-        for entity in self.maze.get_collision(self.colliding_rect()):
+        for entity in self.maze.get_collision(self.colliding_rect):
             entity.hit(Damage(self.damage, Damage.Type.BOMBS))
 
     @staticmethod
@@ -363,7 +379,7 @@ class MovingEntity(Entity):
 
         # Collision (Should almost never occurs with step=1, let's see if it is enough)
         colliding_entities = self.maze.get_collision(
-            self.colliding_rect(), lambda entity: isinstance(entity, self.BOUNCE_ON) and entity is not self
+            self.colliding_rect, lambda entity: isinstance(entity, self.BOUNCE_ON) and entity is not self
         )
         if len(colliding_entities) > 1:
             print("WARNING: More than one entites colliding at once")
@@ -621,7 +637,7 @@ class Enemy(MovingEntity):
         if self.removing_timer.is_active:
             return
 
-        for entity in self.maze.get_collision(self.colliding_rect()):
+        for entity in self.maze.get_collision(self.colliding_rect):
             entity.hit(Damage(self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
 
         if self.current_direction:
@@ -834,11 +850,11 @@ class Bullet(Entity):
         if not self.blocked:
             self.position += self.speed * delay * self.direction
 
-        if not self.maze.is_inside(self.colliding_rect()):
+        if not self.maze.is_inside(self.colliding_rect):
             self.blocked = True
 
         # Check collision
-        colliding_entities = self.maze.get_collision(self.colliding_rect())
+        colliding_entities = self.maze.get_collision(self.colliding_rect)
 
         for entity in colliding_entities:
             if isinstance(entity, self.BLOCKED_BY) and entity != self.enemy:

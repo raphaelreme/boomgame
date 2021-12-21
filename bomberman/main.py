@@ -34,12 +34,17 @@ class BoomGame:
 
         c = input("Menu not implemented yet. Two players (y|n) ? ")
         self.two_players = c.lower().strip() == "y"
+        try:
+            self.maze_solved = int(input("Starting maze ? ")) - 1
+        except:
+            self.maze_solved = 0
         self.game_name = "boom"
 
     def game(self) -> None:
         """Launch a game."""
 
         model = game.GameModel(self.game_name, self.two_players)
+        model.maze_solved = self.maze_solved
         main_view = game_view.GameView(model)
 
         pygame.display.set_mode(main_view.size)

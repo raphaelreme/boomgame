@@ -8,6 +8,6 @@ S|S|S|S|B|S|S|S|S|S|B|S|S|S|S
  |S|B|S|B|S|B|S|B|S|B|S|B|S| 
  | | | | | | |0| | | | | | | 
  |S|B|S|B|S|B|S|B|S|B|S|B|S| 
-S|S| | | |S| | | |S| | | |S|S
+S|S|H| | |S|H| | |S|H| | |S|S
 S|S| | | |S| | | |S| | | |S|S
 S|S| | | |S| | | |S| | | |S|S

@@ -4,7 +4,7 @@
  |S|B|S|B|S|B|S|B|S|B|S|B|S| 
  | | | | | | |B| | | | | | | 
 S|S|B|S|B|S| |S| |S|B|S|B|S|S
- |S|5| | | | |B| | | | |5|S| 
+T|S|5| | | | |B| | | | |5|S|T
  |S| |S|B|S|B|S|B|S|B|S| |S| 
  |B| |B| | | | | | | |B| |B| 
  |S| |S| |S| |S| |S| |S| |S| 

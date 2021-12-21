@@ -1,6 +1,6 @@
- | | | | | | | | | | | | | | 
+ | | | | | | |T| | | | | | | 
 S|S|S|S|S|S|S|S|S|S|S|S|S|S|S
-X|S| |S| |S| |S| |S| |S| |S|Y
+X|S|T|S|T|S|T|S|T|S|T|S|T|S|Y
  |S| |S| |S| |S| |S| |S| |S| 
  |S|B|S|B|S|B|S|B|S|B|S|B|S| 
  |S| |S| |S|6|S|6|S| |S| |S| 

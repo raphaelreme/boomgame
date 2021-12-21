@@ -7,7 +7,7 @@ B|S|B|S|B|S|B|S|B|S|B|S|B|S|B
  | | | |B|S|S|B|S|S|B| | | | 
 B|S|B|S|S|S|B|S|B|S|S|S|B|S|B
  | |B|S|S|B| | | |B|S|S|B| | 
- |S|S|S|B|S| |S| |S|B|S|S|S| 
+T|S|S|S|B|S| |S| |S|B|S|S|S|T
 B|S|S|B| | | | | | | |B|S|S|B
 S|S|B|S| |S|0|S|0|S| |S|B|S|S
-S|B| | | | | | | | | | | |B|S
+S|B| | | | | |T| | | | | |B|S

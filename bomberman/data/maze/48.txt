@@ -10,4 +10,4 @@ S|S|B|S|B|S|5|S|5|S|B|S|B|S|S
 S|S|B|S|B|S|4|S|4|S|B|S|B|S|S
 6| |B|B| |S| |S| |S| |B|B| |6
  |S| |S|S|S| |S| |S|S|S| |S| 
- | | |S| | | | | | | |S| | | 
+T| | |S| | | | | | | |S| | |T

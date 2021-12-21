@@ -515,9 +515,19 @@ class Teleporter(Entity):
             self.changed(events.ForwardTimeEvent(self))
 
     def teleport(self):
-        # TODO: Spawning flame
+        self.maze.add_entity(Flash(self.maze, self.position))
         self.reload_timer.reset()
         self.reload_timer.start(self.RELOADING_DELAY)
+
+
+class Flash(Entity):
+    """Flash of entities teleporting in the game"""
+
+    REMOVING_DELAY = 0.3
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self.removing_timer.start(self.REMOVING_DELAY)
 
 
 class Player(MovingEntity):

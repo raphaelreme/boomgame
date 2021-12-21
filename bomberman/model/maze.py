@@ -93,6 +93,7 @@ class Maze(observable.Observable):
 
         player.register_new_maze(self, position)
         self.add_entity(player)
+        self.add_entity(entity.Flash(self, player.position))
 
     def get_collision(self, rect: vector.Rect, condition: Callable[[entity.Entity], bool] = None) -> Set[entity.Entity]:
         """Get the overlapping entities

@@ -133,6 +133,7 @@ class BombView(EntityView):
 
 
 class LaserView(EntityView):
+    PRIORITY = 5
     FILE_NAME = "laser.png"
     ROWS = 3
     COLUMNS = 4
@@ -163,6 +164,14 @@ class TeleporterView(EntityView):
             teleporter = cast(entity.Teleporter, event_.entity)
             j = int(teleporter.alive_since.current / self.RATE) % self.COLUMNS
             self.select_sprite(0, j)
+
+
+class FlashView(EntityView):
+    FILE_NAME = "flash.png"
+    PRIORITY = 30
+    ROWS = 1
+    COLUMNS = 4
+    REMOVING_STEPS = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 2), (0, 1), (0, 0)]
 
 
 class MovingEntityView(EntityView):

@@ -117,10 +117,6 @@ class BombView(EntityView):
     RATE = 0.3
     FAST_RATE = 0.05
 
-    def __init__(self, entity_: entity.Bomb) -> None:
-        super().__init__(entity_)
-        self.select_sprite(0, 0)
-
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
         if event_.handled:
@@ -145,6 +141,28 @@ class LaserView(EntityView):
     def __init__(self, entity_: entity.Laser) -> None:
         super().__init__(entity_)
         self.removing_steps = [(entity_.orientation.value, index[1]) for index in self.REMOVING_STEPS]
+
+
+class TeleporterView(EntityView):
+    FILE_NAME = "teleporter.png"
+    ROWS = 1
+    COLUMNS = 8
+    RATE = 0.1
+
+    def __init__(self, entity_: entity.Entity) -> None:
+        super().__init__(entity_)
+        self.entity: entity.Teleporter
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+
+        if event_.handled:
+            return
+
+        if isinstance(event_, events.ForwardTimeEvent):
+            teleporter = cast(entity.Teleporter, event_.entity)
+            j = int(teleporter.alive_since.current / self.RATE) % self.COLUMNS
+            self.select_sprite(0, j)
 
 
 class MovingEntityView(EntityView):

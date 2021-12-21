@@ -305,6 +305,7 @@ class MovingEntity(Entity):
         self.prev_position = self.position
         self.next_position: Optional[vector.Vector] = None
         self.try_moving_since = 0.0
+        self.is_still_since = 0.0
         self.step = 0.0
 
     def set_wanted_direction(self, direction: Optional[vector.Direction]) -> None:
@@ -339,7 +340,9 @@ class MovingEntity(Entity):
         Args:
             delay (float): Time delay since last call.
         """
-        # Not moving yet, can update the position directly
+        self.is_still_since += delay
+
+        # Not moving yet, can update the direction directly
         if not self.next_position:
             self._update_direction()
             if not self.current_direction and self.try_moving_since:
@@ -358,9 +361,12 @@ class MovingEntity(Entity):
                 self.next_position = self.position + self.current_direction.vector
 
         if not self.next_position:  # Move against an obstacle
+            if self.is_still_since > 1:
+                self.teleport()  # On a teleporter, don't stay blocked
             self.changed(events.MovedEntityEvent(self))
             return
 
+        self.is_still_since = 0.0
         step = delay * self.speed
         self.position += self.current_direction.vector * step
         self.step += step
@@ -374,6 +380,8 @@ class MovingEntity(Entity):
             self.step = 0
             self.prev_position = self.position
             self.next_position = None
+
+            self.teleport()
 
             self.move(remaining_delay)
             return
@@ -392,6 +400,30 @@ class MovingEntity(Entity):
                 self._switch_direction()
 
         self.changed(events.MovedEntityEvent(self))
+
+    def teleport(self) -> None:
+        """Try to teleport the entity"""
+        assert self.position.int_part() == self.position
+
+        for entity in self.maze.entities:
+            if not isinstance(entity, Teleporter):
+                continue
+
+            if not entity.position == self.position:
+                continue
+
+            next_teleporter = entity.next_teleporter
+
+            if next_teleporter is None:
+                return
+
+            self.position = next_teleporter.position
+            self.prev_position = self.position
+            self.is_still_since = 0.0
+
+            entity.teleport()
+            next_teleporter.teleport()
+            return
 
     def _switch_direction(self) -> None:
         if self.current_direction:
@@ -418,6 +450,74 @@ class MovingEntity(Entity):
         )
 
         return valid
+
+
+class Teleporter(Entity):
+    """Teleports moving entities in the maze"""
+
+    REPR = "T"
+    RELOADING_DELAY = 0.8  # When reloading, nothing can go out of it (But you can still go in)
+    BLOCKED_BY = (MovingEntity,)
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self._in_next_teleporter = False
+        self._next_teleporter: Optional[Teleporter] = None
+        self.reload_timer = timer.Timer(increase=False)
+
+        self.alive_since = timer.Timer()
+        self.alive_since.start(100)
+
+    @property
+    def next_teleporter(self) -> Optional[Teleporter]:
+        if self._in_next_teleporter:
+            return None
+
+        if not self._next_teleporter:
+            return None
+
+        if self._next_teleporter.is_available():
+            return self._next_teleporter
+
+        self._in_next_teleporter = True
+        next_teleporter = self._next_teleporter.next_teleporter
+        self._in_next_teleporter = False
+
+        assert self != next_teleporter
+
+        return next_teleporter
+
+    @next_teleporter.setter
+    def next_teleporter(self, teleporter: Teleporter) -> None:
+        self._next_teleporter = teleporter
+
+    def is_available(self) -> bool:
+        if self.reload_timer.is_active:
+            return False
+
+        if self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, self.BLOCKED_BY)):
+            return False
+
+        return True
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if not self.reload_timer.is_active:
+            self.alive_since.update(delay)
+            self.changed(events.ForwardTimeEvent(self))
+            return
+
+        if self.reload_timer.update(delay):
+            delay = -self.reload_timer.current
+            self.reload_timer.reset()
+            self.alive_since.update(delay)
+            self.changed(events.ForwardTimeEvent(self))
+
+    def teleport(self):
+        # TODO: Spawning flame
+        self.reload_timer.reset()
+        self.reload_timer.start(self.RELOADING_DELAY)
 
 
 class Player(MovingEntity):

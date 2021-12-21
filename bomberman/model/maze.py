@@ -202,6 +202,8 @@ class Maze(observable.Observable):
         columns = len(matrix[0])
         maze = Maze((rows, columns))
 
+        teleporters: List[entity.Teleporter] = []
+
         for i, line in enumerate(matrix):
             if len(line) != columns:
                 raise MazeDescriptionError(f"Line {i} has not the same shape as the first line.")
@@ -220,7 +222,14 @@ class Maze(observable.Observable):
                 if not klass:
                     raise MazeDescriptionError(f"Unknown identifier: '{char}' at {(i, j)}")
 
-                maze.entities.add(klass(maze, vector.Vector((float(i), float(j)))))
+                entity_ = klass(maze, vector.Vector((float(i), float(j))))
+                maze.entities.add(entity_)
+
+                if isinstance(entity_, entity.Teleporter):
+                    teleporters.append(entity_)
+
+        for i in range(len(teleporters)):
+            teleporters[i].next_teleporter = teleporters[(i + 1) % len(teleporters)]
 
         return maze
 

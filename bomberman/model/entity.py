@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import math
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from ..designpattern import observable
 from . import events
@@ -24,7 +24,8 @@ class Damage:
         ENEMIES = 0
         BOMBS = 1
 
-    def __init__(self, damage: int, type_: Type) -> None:
+    def __init__(self, entity: Entity, damage: int, type_: Type) -> None:
+        self.entity = entity
         self.damage = damage
         self.type = type_
 
@@ -237,7 +238,7 @@ class Laser(Entity):
             self.size = vector.Vector((1.0, size))
 
         for entity in self.maze.get_collision(self.colliding_rect):
-            entity.hit(Damage(self.damage, Damage.Type.BOMBS))
+            entity.hit(Damage(self, self.damage, Damage.Type.BOMBS))
 
     @staticmethod
     def generate_from_bomb(bomb: Bomb) -> None:
@@ -638,7 +639,7 @@ class Enemy(MovingEntity):
             return
 
         for entity in self.maze.get_collision(self.colliding_rect):
-            entity.hit(Damage(self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
+            entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
 
         if self.current_direction:
             distance = self._check_player_on(self.current_direction)
@@ -823,6 +824,92 @@ class Giggler(Enemy):
     CHASE = True
 
 
+class Head(Enemy):
+    """Head Boss
+
+    Very specific enemy that does not move.
+    """
+
+    # TODO: Explosion
+    REPR = "H"
+    SIZE = (3.0, 3.0)
+    BASE_SPEED = 0
+    BASE_HEALTH = 200
+    DAMAGE = 20
+    REMOVING_DELAY = 2.0
+    RELOADING_DELAY = 3.5
+    FIRING_DELAY = 1.0
+    SCOPE = 9
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+
+        self.hit_by: Set[Laser] = set()  # Hit once by each laser
+        self.left_eye_position = self.position + (0.7, 0.6)
+        self.right_eye_position = self.position + (0.7, 1.4)
+        self.reload_timer.start(self.RELOADING_DELAY)
+
+    def hit(self, damage: Damage) -> bool:
+        if not isinstance(damage.entity, Laser):
+            return False
+
+        if damage.entity in self.hit_by:
+            return False
+
+        self.hit_by.add(damage.entity)
+        return super().hit(damage)
+
+    def update(self, delay: float) -> None:
+        Entity.update(self, delay)  # Don't call neither Enemy nor MovingEntity update
+
+        if self.removing_timer.is_active:
+            return
+
+        for entity in self.maze.get_collision(self.colliding_rect):  # From Enemy
+            entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
+
+        if self.firing_timer.update(delay):
+            self.attack(0.0)
+            self.firing_timer.reset()
+
+        if self.reload_timer.update(delay):
+            self.reload_timer.reset()
+
+        if self.firing_timer.is_active:
+            if (
+                self.firing_timer.current > self.firing_timer.total / 2
+                and self.firing_timer.current - delay < self.firing_timer.total / 2
+            ):
+                self.attack(0.0)
+
+        if not self.reload_timer.is_active:
+            self.reload_timer.start(self.RELOADING_DELAY)
+            self.firing_timer.reset()
+            self.firing_timer.start(self.FIRING_DELAY)
+            self.attack(0.0)
+
+    def attack(self, distance: float) -> None:
+        assert self.BULLET_CLASS
+
+        players = list(
+            filter(
+                lambda entity: isinstance(entity, Player) and not entity.removing_timer.is_active, self.maze.entities
+            )
+        )
+
+        if not players:
+            return
+
+        for eye_position in [self.left_eye_position, self.right_eye_position]:
+            differences = [player.position - eye_position for player in players]
+            distances = [math.sqrt(sum(diff * diff)) for diff in differences]
+            directions = [1 / distances[i] * differences[i] for i in range(len(distances))]
+            distance, direction = min(zip(distances, directions))
+
+            if distance < self.SCOPE:
+                self.maze.add_entity(self.BULLET_CLASS(self, direction, eye_position))
+
+
 class Bullet(Entity):
     """Moving entity with a single direction.
 
@@ -831,7 +918,7 @@ class Bullet(Entity):
 
     REMOVING_DELAY = 0.25
     BASE_SPEED = 3.5
-    BLOCKED_BY = (SolidWall, BreakableWall, Enemy, Player)
+    BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall, Enemy, Player)
     DAMAGE = 1
 
     def __init__(self, enemy: Enemy, direction: vector.Vector) -> None:
@@ -859,7 +946,7 @@ class Bullet(Entity):
         for entity in colliding_entities:
             if isinstance(entity, self.BLOCKED_BY) and entity != self.enemy:
                 self.blocked = True
-            entity.hit(Damage(self.DAMAGE, Damage.Type.ENEMIES))
+            entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))
 
         self.changed(events.MovedEntityEvent(self))
 
@@ -947,3 +1034,23 @@ class Magma(Bullet):
 
 
 Giggler.BULLET_CLASS = Magma
+
+
+class Missile(Bullet):
+    BLOCKED_BY = (Enemy, Player)
+    BASE_SPEED = 3.5
+    DAMAGE = 4
+    SIZE = (0.6, 0.6)
+
+    def __init__(self, enemy: Enemy, direction: vector.Vector, position: vector.Vector) -> None:
+        super().__init__(enemy, direction)
+        self.position = position
+        self.alive_since = timer.Timer()
+        self.alive_since.start(100)
+
+    def update(self, delay: float) -> None:
+        self.alive_since.update(delay)
+        super().update(delay)
+
+
+Head.BULLET_CLASS = Missile

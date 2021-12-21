@@ -302,6 +302,21 @@ class GigglerView(EnemyView):
     pass
 
 
+class HeadView(EnemyView):
+    SPRITE_SIZE = inflate_to_reality((entity.Head.SIZE))
+    ROWS = 1
+    COLUMNS = 1
+    REMOVING_RATE = 0.1
+    REMOVING_STEPS: List[Tuple[int, int]] = []
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        if self.entity.removing_timer.is_active:
+            if int(self.entity.removing_timer.current / self.REMOVING_RATE) % 2:
+                return
+
+        return super().display(surface)
+
+
 class BulletView(EntityView):
     """Base view for bullets"""
 
@@ -366,3 +381,22 @@ class PlasmaView(BulletView):
 
 class MagmaView(BulletView):
     pass
+
+
+class MissileView(BulletView):
+    COLUMNS = 7
+    REMOVING_STEPS = [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6)]
+    ROTATE_RATE = 0.1
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+
+        if self.entity.removing_timer.is_active:
+            return
+
+        if isinstance(event_, events.MovedEntityEvent):
+            missile = cast(entity.Missile, self.entity)
+            self.select_sprite(0, int(missile.alive_since.current / self.ROTATE_RATE) % 2)
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        EntityView.display(self, surface)

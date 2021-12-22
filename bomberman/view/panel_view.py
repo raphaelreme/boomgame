@@ -16,6 +16,9 @@ from . import TILE_SIZE, inflate_to_reality
 from . import view
 
 
+# FIXME: Some very ugly stuff with ratio size and position...
+
+
 def display_with_shadow(
     surface: pygame.surface.Surface, image: pygame.surface.Surface, position: Tuple[int, int], ratio: float
 ) -> None:
@@ -99,7 +102,10 @@ class PlayerDetails(view.View, observer.Observer):
         "player_head": (0.5, 0.5),
         "life": (0.4, 1.5),
         "health": (1.5, 0.5),
-        "score": (4.5, 0.41),
+        "extra": (2.7, 0.41),
+        "bonus": (3.3, 0.45),
+        "score_text": (4.0, 0.6),
+        "score_value": (4.5, 0.41),
         "game": (1.3, 0.7),
         "over": (1.8, 0.75),
     }
@@ -124,6 +130,12 @@ class PlayerDetails(view.View, observer.Observer):
         self.health = HealthView(player, ratio)
         self.health_rect = pygame.rect.Rect(self.positions["health"], self.health.size)
 
+        self.extra = ExtraView(player, ratio)
+        self.extra_rect = pygame.rect.Rect(self.positions["extra"], self.extra.size)
+
+        self.bonus = BonusView(player, ratio)
+        self.bonus_rect = pygame.rect.Rect(self.positions["bonus"], self.bonus.size)
+
         self.game_over = self.player.life == 0
 
     def notify(self, event_: event.Event) -> None:
@@ -136,11 +148,13 @@ class PlayerDetails(view.View, observer.Observer):
 
     def display(self, surface: pygame.surface.Surface) -> None:
         life_text = self.font.render(f" x{self.player.life}", True, (255, 255, 255)).convert_alpha()
-        score_text = self.font.render(f"{self.player.score:06d}", True, (255, 255, 255)).convert_alpha()
+        score_text = self.font.render("score", True, (255, 255, 255)).convert_alpha()
+        score_value = self.font.render(f"{self.player.score:06d}", True, (255, 255, 255)).convert_alpha()
 
         display_with_shadow(surface, self.player_head, self.positions["player_head"], self.ratio)
         display_with_shadow(surface, life_text, self.positions["life"], self.ratio)
-        display_with_shadow(surface, score_text, self.positions["score"], self.ratio)
+        display_with_shadow(surface, score_text, self.positions["score_text"], self.ratio)
+        display_with_shadow(surface, score_value, self.positions["score_value"], self.ratio)
 
         if self.game_over:
             game_text = self.font.render("GAME", True, (255, 255, 255)).convert_alpha()
@@ -149,6 +163,9 @@ class PlayerDetails(view.View, observer.Observer):
             display_with_shadow(surface, over_text, self.positions["over"], self.ratio)
         else:
             self.health.display(surface.subsurface(self.health_rect))
+
+        self.extra.display(surface.subsurface(self.extra_rect))
+        self.bonus.display(surface.subsurface(self.bonus_rect))
 
 
 class HealthView(view.Sprite):
@@ -206,3 +223,116 @@ class HealthView(view.Sprite):
 
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.hearts, self.position)
+
+
+class ExtraView(view.Sprite):
+    """Display the extra of each player"""
+
+    # Default size in tiles
+    SIZE = (13 / 32 + PanelView.SHADOW_OFFSET[0], 5 * 15 / 32 + PanelView.SHADOW_OFFSET[1])
+
+    SPRITE_SIZE = (int(13 / 32 * TILE_SIZE[0]), int(13 / 32 * TILE_SIZE[1]))
+    ROWS = 1
+    COLUMNS = 6
+    FILE_NAME = "extra_icons.png"
+
+    def __init__(self, player: entity.Player, ratio: float) -> None:
+        self.SPRITE_SIZE = (int(self.SPRITE_SIZE[0] * ratio), int(self.SPRITE_SIZE[1] * ratio))
+
+        image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
+        super().__init__(
+            view.load_image(self.FILE_NAME, image_total_size),
+            (0, 0),
+        )
+
+        self.player = player
+        self.ratio = ratio
+
+        # This view does not have the size of the sprite but of several sprites
+        self.size = inflate_to_reality(self.SIZE, ratio)
+
+        self.extra = pygame.surface.Surface(self.size).convert_alpha()
+        self._build_extra()
+
+    def _build_extra(self) -> None:
+        self.extra.fill((0, 0, 0, 0))  # Full transparency
+
+        for i, has_letter in enumerate(self.player.extra):
+            if has_letter:
+                self.select_sprite(0, i + 1)
+            else:
+                self.select_sprite(0, 0)
+
+            icon = self.sprite_image.subsurface(self.current_sprite)
+            display_with_shadow(self.extra, icon, (i * (self.SPRITE_SIZE[0] + 2), 0), self.ratio)
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        surface.blit(self.extra, self.position)
+
+
+class BonusView(view.Sprite):
+    """Display the bonus of each player"""
+
+    # Default size in tiles
+    SIZE = (1 + 13 / 32 + PanelView.SHADOW_OFFSET[0], 5 * 14 / 32 + PanelView.SHADOW_OFFSET[1])
+
+    SPRITE_SIZE = (int(13 / 32 * TILE_SIZE[0]), int(13 / 32 * TILE_SIZE[1]))
+    ROWS = 2
+    COLUMNS = 5
+    FILE_NAME = "bonus_icons.png"
+
+    def __init__(self, player: entity.Player, ratio: float) -> None:
+        self.SPRITE_SIZE = (int(self.SPRITE_SIZE[0] * ratio), int(self.SPRITE_SIZE[1] * ratio))
+
+        image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
+        super().__init__(
+            view.load_image(self.FILE_NAME, image_total_size),
+            (0, 0),
+        )
+
+        self.font = view.load_font("pf_tempesta_seven_condensed_bold.ttf", self.SPRITE_SIZE[1] // 2)
+
+        self.player = player
+        self.ratio = ratio
+
+        # This view does not have the size of the sprite but of several sprites
+        self.size = inflate_to_reality(self.SIZE, ratio)
+        self.bonus = pygame.surface.Surface(self.size).convert_alpha()
+        self._build_bonus()
+
+    def _build_bonus(self) -> None:
+        self.bonus.fill((0, 0, 0, 0))  # Full transparency
+
+        # Bomb capacity
+        self.select_sprite(0, 0)
+        icon = self.sprite_image.subsurface(self.current_sprite)
+        display_with_shadow(self.bonus, icon, (0, 0), self.ratio)
+
+        capacity_text = self.font.render(f" x{self.player.bomb_capacity}", True, (255, 255, 255)).convert_alpha()
+        display_with_shadow(self.bonus, capacity_text, (0, self.SPRITE_SIZE[1]), self.ratio)
+
+        # Fast bomb
+        self.select_sprite(int(not self.player.fast), 1)
+        icon = self.sprite_image.subsurface(self.current_sprite)
+        display_with_shadow(self.bonus, icon, (self.SPRITE_SIZE[0] + 1, 0), self.ratio)
+
+        # Laser
+        self.select_sprite(0, 2)
+        icon = self.sprite_image.subsurface(self.current_sprite)
+        display_with_shadow(self.bonus, icon, (2 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+
+        laser_text = self.font.render(f" x{self.player.bomb_radius}", True, (255, 255, 255)).convert_alpha()
+        display_with_shadow(self.bonus, laser_text, (2 * (self.SPRITE_SIZE[1] + 1), self.SPRITE_SIZE[1]), self.ratio)
+
+        # Shield
+        self.select_sprite(int(not self.player.shield.is_active), 3)
+        icon = self.sprite_image.subsurface(self.current_sprite)
+        display_with_shadow(self.bonus, icon, (3 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+
+        # Fast
+        self.select_sprite(int(not self.player.fast), 4)
+        icon = self.sprite_image.subsurface(self.current_sprite)
+        display_with_shadow(self.bonus, icon, (4 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        surface.blit(self.bonus, self.position)

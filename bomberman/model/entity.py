@@ -580,7 +580,7 @@ class Player(MovingEntity):
         self.life = self.BASE_LIFE
         self.bomb_count = 0
         self.score = 0
-        # TODO: Invulnerability time with new life, shield bonus, any hit
+        self.extra = [False] * 5
 
     def reset(self) -> None:
         """Reset the player when changing of maze"""

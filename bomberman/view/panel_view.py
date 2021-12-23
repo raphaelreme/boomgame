@@ -142,9 +142,11 @@ class PlayerDetails(view.View, observer.Observer):
         if isinstance(event_, events.HitEntityEvent):
             self.health._build_hearts()
 
-        if isinstance(event_, events.LifeLossEvent):
+        if isinstance(event_, (events.LifeLossEvent, events.PlayerDetailsEvent)):
             self.game_over = self.player.life == 0
             self.health._build_hearts()
+            self.extra._build_extra()
+            self.bonus._build_bonus()
 
     def display(self, surface: pygame.surface.Surface) -> None:
         life_text = self.font.render(f" x{self.player.life}", True, (255, 255, 255)).convert_alpha()
@@ -312,7 +314,7 @@ class BonusView(view.Sprite):
         display_with_shadow(self.bonus, capacity_text, (0, self.SPRITE_SIZE[1]), self.ratio)
 
         # Fast bomb
-        self.select_sprite(int(not self.player.fast), 1)
+        self.select_sprite(int(not self.player.fast_bomb), 1)
         icon = self.sprite_image.subsurface(self.current_sprite)
         display_with_shadow(self.bonus, icon, (self.SPRITE_SIZE[0] + 1, 0), self.ratio)
 
@@ -330,7 +332,7 @@ class BonusView(view.Sprite):
         display_with_shadow(self.bonus, icon, (3 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
 
         # Fast
-        self.select_sprite(int(not self.player.fast), 4)
+        self.select_sprite(int(not self.player.fast.is_active), 4)
         icon = self.sprite_image.subsurface(self.current_sprite)
         display_with_shadow(self.bonus, icon, (4 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
 

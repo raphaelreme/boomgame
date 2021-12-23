@@ -78,3 +78,7 @@ class RemovedEntityEvent(EntityEvent):
 
 class LifeLossEvent(EntityEvent):
     """When a player loses a life (after its removing delay)"""
+
+
+class PlayerDetailsEvent(EntityEvent):
+    """When a player details has to be updated"""

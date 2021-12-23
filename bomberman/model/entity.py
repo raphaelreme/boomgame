@@ -5,7 +5,7 @@ from __future__ import annotations
 import enum
 import math
 import random
-from typing import Dict, List, Optional, Set, Tuple
+from typing import cast, Dict, List, Optional, Set, Tuple
 
 from ..designpattern import observable
 from . import events
@@ -164,6 +164,14 @@ class BreakableWall(Entity):
     REPR = "B"
     VULNERABILITIES = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.5
+
+    def remove(self) -> None:
+        rand = random.random()
+        if rand <= BonusClass.BONUS_RATE:
+            weights = list(map(lambda klass: klass.RATE, BonusClass.bonus_classes))
+            klass = random.choices(BonusClass.bonus_classes, weights=weights, k=1)[0]
+            self.maze.add_entity(klass(self.maze, self.position))
+        super().remove()
 
 
 class SolidWall(Entity):
@@ -560,7 +568,7 @@ class Player(MovingEntity):
     BASE_HEALTH = 16
     BASE_LIFE = 3
     BASE_BOMB_CAPACITY = 5
-    BASE_BOMB_RADIUS = 4
+    BASE_BOMB_RADIUS = 2
     NEW_LIFE_SHIELD = 3.0
     HIT_SHIELD = 1.0
 
@@ -572,8 +580,8 @@ class Player(MovingEntity):
         # Init bonus
         self.bomb_capacity = self.BASE_BOMB_CAPACITY
         self.bomb_radius = self.BASE_BOMB_RADIUS
-        self.fast = False
         self.fast_bomb = False
+        self.fast = timer.Timer(increase=False)
         self.shield = timer.Timer(increase=False)
 
         # Init other import stuff
@@ -587,7 +595,7 @@ class Player(MovingEntity):
         super().reset()  # Drop links to the observers so that they can be garbage collected
 
         # Player related
-        self.fast = False
+        self.fast.reset()
         self.shield.reset()
         self.bomb_count = 0
 
@@ -604,10 +612,14 @@ class Player(MovingEntity):
 
     def new_life(self) -> None:
         """Reset some stuff when a player loses a life"""
-        self.fast = False
+        self.health = self.BASE_HEALTH
+        self.speed = self.BASE_SPEED
+        self.bomb_capacity = self.BASE_BOMB_CAPACITY
+        self.bomb_radius = self.BASE_BOMB_RADIUS
+        self.fast_bomb = False
+        self.fast.reset()
         self.shield.reset()
         self.shield.start(self.NEW_LIFE_SHIELD)
-        # Reset bonus
 
         self.removing_timer.reset()
 
@@ -616,10 +628,8 @@ class Player(MovingEntity):
         if not self.life:
             super().remove()
         else:
-            self.health = self.BASE_HEALTH
+            self.new_life()
 
-        self.new_life()
-        # TODO: Reset bonus
         self.changed(events.LifeLossEvent(self))
 
     def register_new_maze(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -674,6 +684,12 @@ class Player(MovingEntity):
 
         if self.shield.update(delay):
             self.shield.reset()
+            self.changed(events.PlayerDetailsEvent(self))
+
+        if self.fast.update(delay):
+            self.fast.reset()
+            self.speed = self.BASE_SPEED
+            self.changed(events.PlayerDetailsEvent(self))
 
 
 # XXX: Ugly
@@ -1164,3 +1180,145 @@ class Missile(Bullet):
 
 
 Head.BULLET_CLASS = Missile
+
+
+class BonusClass(EntityClass):
+    bonus_classes: List[BonusClass] = []
+    BONUS_RATE = 0.2
+    RATE = 0.0
+
+    def __init__(cls, cls_name: str, bases: tuple, attributes: dict) -> None:
+        super().__init__(cls_name, bases, attributes)
+
+        type(cls).bonus_classes.append(cls)
+
+
+class Bonus(Entity, metaclass=BonusClass):
+    """Base class for Bonus"""
+
+    RATE = 0.0
+    DELAY = 7.0
+    REMOVING_DELAY = 3.0
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self.timer = timer.Timer()
+        self.timer.start(self.DELAY)
+
+    def catch(self, player: Player) -> None:
+        """Called when a player catches a bonus"""
+        self.remove()
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if self.timer.update(delay):
+            self.timer.reset()
+            self.removing()
+
+        players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
+        if players:
+            self.catch(cast(Player, players.pop()))
+
+
+class LightboltBonus(Bonus):
+    """Remove all the breakable walls"""
+
+    RATE = 0.1
+    # TODO: catch
+
+
+class SkullBonus(Bonus):
+    """Kill all enemies"""
+
+    RATE = 0.1
+    # TODO: catch
+
+
+class BombCapacityBonus(Bonus):
+    """Increase bomb capacity"""
+
+    RATE = 0.2
+    MAX_CAPACITY = 8
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        if player.bomb_capacity < self.MAX_CAPACITY:
+            player.bomb_capacity += 1
+            player.changed(events.PlayerDetailsEvent(player))
+
+
+class FastBombBonus(Bonus):
+    """Increase bomb speed"""
+
+    RATE = 0.2
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        if not player.fast_bomb:
+            player.fast_bomb = True
+            player.changed(events.PlayerDetailsEvent(player))
+
+
+class BombRadiusBonus(Bonus):
+    """Increase bomb radius"""
+
+    RATE = 0.2
+    MAX_RADIUS = 4
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        if player.bomb_radius < self.MAX_RADIUS:
+            player.bomb_radius += 1
+            player.changed(events.PlayerDetailsEvent(player))
+
+
+class HeartBonus(Bonus):
+    """Heal the player of 1 heart"""
+
+    RATE = 0.3
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        if player.health < Player.BASE_HEALTH:
+            player.health = min(Player.BASE_HEALTH, player.health + 2)
+            player.changed(events.PlayerDetailsEvent(player))
+
+
+class FullHeartBonus(Bonus):
+    """Heal fully the player"""
+
+    RATE = 0.15
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        if player.health < Player.BASE_HEALTH:
+            player.health = Player.BASE_HEALTH
+            player.changed(events.PlayerDetailsEvent(player))
+
+
+class ShieldBonus(Bonus):
+    """Shield the player"""
+
+    RATE = 0.2
+    SHIELD_DELAY = 6.0
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        player.shield.reset()
+        player.shield.start(self.SHIELD_DELAY)
+        player.changed(events.PlayerDetailsEvent(player))
+
+
+class FastBonus(Bonus):
+    """Increase player speed"""
+
+    RATE = 0.2
+    FAST_DELAY = 7.0
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        player.fast.reset()
+        player.fast.start(self.FAST_DELAY)
+        player.speed = Player.BASE_SPEED * 2
+        player.changed(events.PlayerDetailsEvent(player))

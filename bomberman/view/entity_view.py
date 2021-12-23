@@ -427,3 +427,72 @@ class MissileView(BulletView):
 
     def display(self, surface: pygame.surface.Surface) -> None:
         EntityView.display(self, surface)
+
+
+class BonusView(EntityView):
+    """Base view for bonuses"""
+
+    FILE_NAME = "bonuses.png"
+    PRIORITY = 50
+    ROWS = 1
+    COLUMNS = 9
+    REMOVING_RATE = 0.1
+
+    class_to_column = {
+        entity.LightboltBonus: 0,
+        entity.SkullBonus: 1,
+        entity.BombCapacityBonus: 2,
+        entity.FastBombBonus: 3,
+        entity.BombRadiusBonus: 4,
+        entity.HeartBonus: 5,
+        entity.FullHeartBonus: 6,
+        entity.ShieldBonus: 7,
+        entity.FastBonus: 8,
+    }
+
+    def __init__(self, entity_: entity.Bonus) -> None:
+        super().__init__(entity_)
+        self.select_sprite(0, self.class_to_column[type(entity_)])
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        if self.entity.removing_timer.is_active:
+            if int(self.entity.removing_timer.current / self.REMOVING_RATE) % 2:
+                return
+
+        return super().display(surface)
+
+
+class LightboltBonusView(BonusView):
+    pass
+
+
+class SkullBonusView(BonusView):
+    pass
+
+
+class BombCapacityBonusView(BonusView):
+    pass
+
+
+class FastBombBonusView(BonusView):
+    pass
+
+
+class BombRadiusBonusView(BonusView):
+    pass
+
+
+class HeartBonusView(BonusView):
+    pass
+
+
+class FullHeartBonusView(BonusView):
+    pass
+
+
+class ShieldBonusView(BonusView):
+    pass
+
+
+class FastBonusView(BonusView):
+    pass

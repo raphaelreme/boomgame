@@ -112,7 +112,6 @@ class GameModel(observable.Observable):
         self.state = GameModel.State.BONUS_SCREEN
         self.end_timer.start(GameModel.END_SCREEN_DELAY)
 
-        # FIXME: drop player links to ensure to drop all the previous objects
         self.changed(events.MazeEndEvent())
 
         self.maze_solved += 1

@@ -213,11 +213,11 @@ class PlayerView(MovingEntityView):
     PRIORITY = 15
     ROWS = 5
     COLUMNS = 8
-    REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 10 + [(4, 1)] * 5
+    REMOVING_STEPS = [(4, 0), (4, 1), (4, 2), (4, 1)] * 15 + [(4, 1)] * 40
     SHIELD = "shield.png"
     SHIELD_ROWS = 1
     SHIELD_COLUMNS = 3
-    SHIELD_TWINKLE = 1.5
+    SHIELD_TWINKLE_DELAY = 3.0
     SHIELD_RATE = 0.1
 
     direction_to_shield = {
@@ -239,8 +239,6 @@ class PlayerView(MovingEntityView):
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
-        if event_.handled:
-            return
 
         if isinstance(event_, events.LifeLossEvent):
             # In case of a life loss, let's update the sprite like it would be done when moving
@@ -250,7 +248,7 @@ class PlayerView(MovingEntityView):
         if not self.entity.shield.is_active:
             return super().display(surface)
 
-        if self.entity.shield.current < self.SHIELD_TWINKLE:
+        if self.entity.shield.current < self.SHIELD_TWINKLE_DELAY:
             if int(self.entity.shield.current / self.SHIELD_RATE) % 2:
                 return super().display(surface)
 
@@ -363,6 +361,7 @@ class BulletView(EntityView):
     def __init__(self, entity_: entity.Bullet) -> None:
         self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
         super().__init__(entity_)
+        self.entity: entity.Bullet
         self.rotation = self.direction_to_rotation[entity_.display_direction]
 
     def notify(self, event_: event.Event) -> None:
@@ -399,7 +398,30 @@ class LightboltView(BulletView):
 
 
 class FlameView(BulletView):
-    pass
+    REMOVING_STEPS = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 4), (0, 3), (0, 2), (0, 1), (0, 0)]
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+        if self.entity.removing_timer.is_active:
+            return
+
+        if isinstance(event_, events.MovedEntityEvent):
+            if self.entity.distance < self.entity.RANGE:
+                j = int(self.COLUMNS * self.entity.distance / self.entity.RANGE)
+                self.select_sprite(0, j)
+                self.removing_steps = self.REMOVING_STEPS[j:]
+
+    def __lt__(self, other) -> bool:
+        # Improve Flame visualization by enforcing an order between Flames
+        if isinstance(other, FlameView):
+            if self.entity.removing_timer.is_active:
+                if not other.entity.removing_timer.is_active:
+                    return True
+                return self.entity.removing_timer.current < other.entity.removing_timer.current
+            if other.entity.removing_timer.is_active:
+                return False
+            return self.entity.distance > other.entity.distance
+        return super().__lt__(other)
 
 
 class PlasmaView(BulletView):

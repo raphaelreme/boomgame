@@ -218,14 +218,17 @@ class Laser(Entity):
         VERTICAL = 1
         HORIZONTAL = 2
 
-    REMOVING_DELAY = 0.3
-    DAMAGE = 10
+    REMOVING_DELAY = 0.15
+    DAMAGE = 13
+    USE_STRENGTH = False  # By default lasers are all the same strength
 
     def __init__(
         self, maze_: maze.Maze, position: vector.Vector, strength: float, orientation: Laser.Orientation
     ) -> None:
         super().__init__(maze_, position)
         self.orientation = orientation
+        if not self.USE_STRENGTH:
+            strength = 1.0
         self.damage = int(self.DAMAGE * strength)
         self.removing()
 
@@ -275,7 +278,7 @@ class Laser(Entity):
                     break
 
                 alpha = dist / bomb.radius
-                strength = 0.25 * alpha + (1 - alpha)  # The furthest the weakest
+                strength = 0.5 * alpha + (1 - alpha)  # The furthest the weakest
 
                 if maze_.get_collision(laser_rect, lambda entity: isinstance(entity, BreakableWall)):
                     # Lasers can go through breakable wall only if the bomb is close to it
@@ -298,7 +301,7 @@ class MovingEntity(Entity):
         BOUNCE_ON (Set[EntityClass]): Moving entities that will block the entity.
     """
 
-    BASE_SPEED = 3.0
+    BASE_SPEED = 4.0
     BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall)
     BOUNCE_ON: Tuple[EntityClass, ...] = ()
 
@@ -563,13 +566,14 @@ class Player(MovingEntity):
     # Has no real REPR. X and Y are used to indicates that a player can spawn here.
     # Players are added to a maze by the game itself
 
-    REMOVING_DELAY = 2.0
+    REMOVING_DELAY = 5.0
     VULNERABILITIES = [Damage.Type.BOMBS, Damage.Type.ENEMIES]
     BASE_HEALTH = 16
     BASE_LIFE = 3
     BASE_BOMB_CAPACITY = 5
     BASE_BOMB_RADIUS = 2
-    NEW_LIFE_SHIELD = 3.0
+    BOMBING_DELAY = 0.2
+    NEW_LIFE_SHIELD = 5.0
     HIT_SHIELD = 1.0
 
     def __init__(self, identifier: int) -> None:
@@ -586,6 +590,7 @@ class Player(MovingEntity):
 
         # Init other import stuff
         self.life = self.BASE_LIFE
+        self.bomb_timer = timer.Timer()
         self.bomb_count = 0
         self.score = 0
         self.extra = [False] * 5
@@ -595,6 +600,7 @@ class Player(MovingEntity):
         super().reset()  # Drop links to the observers so that they can be garbage collected
 
         # Player related
+        self.speed = self.BASE_SPEED
         self.fast.reset()
         self.shield.reset()
         self.bomb_count = 0
@@ -650,8 +656,11 @@ class Player(MovingEntity):
         if self.bomb_count == self.bomb_capacity:
             return
 
-        if 0.6 < self.step < 0.9:
-            return  # FIXME: Should have some bombing delay ? to prevent two bombs dropped at the same time (59 and 91 ?)
+        if self.bomb_timer.is_active:
+            return
+
+        if 0.6 < self.step < 0.8:
+            return
 
         bomb_position = self.prev_position
         if self.next_position and self.step >= 0.8:
@@ -664,6 +673,7 @@ class Player(MovingEntity):
 
         self.maze.add_entity(Bomb(self, bomb_position))
         self.bomb_count += 1
+        self.bomb_timer.start(self.BOMBING_DELAY)
 
     def bomb_explodes(self) -> None:
         self.bomb_count -= 1
@@ -691,11 +701,13 @@ class Player(MovingEntity):
             self.speed = self.BASE_SPEED
             self.changed(events.PlayerDetailsEvent(self))
 
+        if self.bomb_timer.update(delay):
+            self.bomb_timer.reset()
+
 
 # XXX: Ugly
 Player.BOUNCE_ON = (Player,)
 
-# TODO: improve speed and damage estimation
 # FIXME: Build a AI system for enemies rather than this ?
 
 
@@ -709,7 +721,7 @@ class Enemy(MovingEntity):
     CHASE = False  # Chase the player
     DAMAGE = 1
     BULLET_CLASS: Optional[EntityClass] = None
-    FIRING_DELAY = 0.25
+    FIRING_DELAY = 0.15
     RELOADING_DELAY = 1.0
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -842,19 +854,22 @@ class Soldier(Enemy):
 class Sarge(Enemy):
     REPR = "1"
     ERRATIC = True
+    RELOADING_DELAY = 0.75
 
 
 class Lizzy(Enemy):
     REPR = "2"
+    FIRING_DELAY = 0.2
+    RELOADING_DELAY = 1.0
 
 
 class Taur(Enemy):
     REPR = "3"
-    BASE_SPEED = 3.0
+    BASE_SPEED = 4.0
     CHASE = True
-
-    FIRING_DELAY = 0.2
-    RELOADING_DELAY = 0.35
+    DAMAGE = 2
+    FIRING_DELAY = 0.10
+    RELOADING_DELAY = 0.20
 
     def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
         distance = super()._check_player_on(direction)
@@ -891,6 +906,8 @@ class Gunner(Enemy):
 class Thing(Enemy):
     REPR = "5"
     CHASE = True
+    DAMAGE = 2
+    FIRING_DELAY = 0.25
 
 
 class Ghost(Enemy):
@@ -899,7 +916,7 @@ class Ghost(Enemy):
     DAMAGE = 2
     FAST_SPEED = 7.0
     FIRING_DELAY = float("inf")
-    RELOADING_DELAY = 2.0
+    RELOADING_DELAY = 1.5
 
     def attack(self, distance: float) -> None:
         assert self.current_direction
@@ -932,22 +949,29 @@ class Ghost(Enemy):
 class Smoulder(Enemy):
     REPR = "7"
     CHASE = True
+    DAMAGE = 2
+    FIRING_DELAY = 0.5
     RELOADING_DELAY = 0.2
 
     def attack(self, distance: float) -> None:
-        if distance <= 4:
+        if distance <= Flame.RANGE:
             super().attack(distance)
 
 
 class Skully(Enemy):
     REPR = "8"
     CHASE = True
-    RELOADING_DELAY = 0.125
+    DAMAGE = 2
+    RELOADING_DELAY = 0.15
 
 
 class Giggler(Enemy):
     REPR = "9"
+    BASE_SPEED = 4.0
     CHASE = True
+    DAMAGE = 4
+    FIRING_DELAY = 0.5
+    RELOADING_DELAY = 1.2
 
 
 class Head(Enemy):
@@ -963,8 +987,8 @@ class Head(Enemy):
     BASE_HEALTH = 200
     DAMAGE = 20
     REMOVING_DELAY = 2.0
-    RELOADING_DELAY = 3.5
-    FIRING_DELAY = 1.0
+    RELOADING_DELAY = 3.6
+    FIRING_DELAY = 1.2
     SCOPE = 9
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -1043,9 +1067,10 @@ class Bullet(Entity):
     """
 
     REMOVING_DELAY = 0.25
-    BASE_SPEED = 3.5
+    BASE_SPEED = 5.0
     BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall, Enemy, Player)
     DAMAGE = 1
+    RANGE = float("inf")
 
     def __init__(self, enemy: Enemy, direction: vector.Vector) -> None:
         super().__init__(enemy.maze, enemy.position)
@@ -1055,6 +1080,7 @@ class Bullet(Entity):
         self.position += direction * 0.5
         self.speed = self.BASE_SPEED
         self.initial_position = self.enemy.position
+        self.distance = 0.0
         self.blocked = False
 
     def update(self, delay: float) -> None:
@@ -1064,6 +1090,11 @@ class Bullet(Entity):
             self.position += self.speed * delay * self.direction
 
         if not self.maze.is_inside(self.colliding_rect):
+            self.blocked = True
+
+        diff = self.position - self.initial_position
+        self.distance = math.sqrt(sum(diff * diff))
+        if self.distance > self.RANGE:
             self.blocked = True
 
         # Check collision
@@ -1081,7 +1112,7 @@ class Bullet(Entity):
 
 
 class Shot(Bullet):
-    BASE_SPEED = 3.5
+    BASE_SPEED = 5.0
     DAMAGE = 1
     SIZE = (0.25, 0.25)
 
@@ -1091,7 +1122,7 @@ Sarge.BULLET_CLASS = Shot
 
 
 class Fireball(Bullet):
-    BASE_SPEED = 3.0
+    BASE_SPEED = 4.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
 
@@ -1109,7 +1140,7 @@ Gunner.BULLET_CLASS = MGShot
 
 
 class Lightbolt(Bullet):
-    BASE_SPEED = 3.5
+    BASE_SPEED = 5.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
 
@@ -1118,25 +1149,21 @@ Thing.BULLET_CLASS = Lightbolt
 
 
 class Flame(Bullet):
-    REMOVING_DELAY = 1.0
-    BASE_SPEED = 3.5
+    REMOVING_DELAY = 0.5
+    BASE_SPEED = 3.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
-
-    def __init__(self, enemy: Enemy, direction: vector.Vector) -> None:
-        super().__init__(enemy, direction)
-        self.removing()
+    RANGE = 3.5
 
     def update(self, delay: float) -> None:
         super().update(delay)
 
-        if self.removing_timer.is_done:
+        if self.removing_timer.is_active:
             return
 
-        t = self.removing_timer.current / self.removing_timer.total
         min_size = self.SIZE[0]
         max_size = 1
-        size = t * min_size + (1 - t) * max_size
+        size = self.distance / self.RANGE * max_size + (1 - self.distance / self.RANGE) * min_size
 
         self.size = vector.Vector((size, size))
 
@@ -1154,7 +1181,7 @@ Skully.BULLET_CLASS = Plasma
 
 
 class Magma(Bullet):
-    BASE_SPEED = 4.0
+    BASE_SPEED = 5.0
     DAMAGE = 4
     SIZE = (0.8, 0.8)
 
@@ -1184,7 +1211,7 @@ Head.BULLET_CLASS = Missile
 
 class BonusClass(EntityClass):
     bonus_classes: List[BonusClass] = []
-    BONUS_RATE = 0.2
+    BONUS_RATE = 0.1
     RATE = 0.0
 
     def __init__(cls, cls_name: str, bases: tuple, attributes: dict) -> None:
@@ -1224,21 +1251,21 @@ class Bonus(Entity, metaclass=BonusClass):
 class LightboltBonus(Bonus):
     """Remove all the breakable walls"""
 
-    RATE = 0.1
+    RATE = 0.05
     # TODO: catch
 
 
 class SkullBonus(Bonus):
     """Kill all enemies"""
 
-    RATE = 0.1
+    RATE = 0.03
     # TODO: catch
 
 
 class BombCapacityBonus(Bonus):
     """Increase bomb capacity"""
 
-    RATE = 0.2
+    RATE = 0.15
     MAX_CAPACITY = 8
 
     def catch(self, player: Player) -> None:
@@ -1251,7 +1278,7 @@ class BombCapacityBonus(Bonus):
 class FastBombBonus(Bonus):
     """Increase bomb speed"""
 
-    RATE = 0.2
+    RATE = 0.1
 
     def catch(self, player: Player) -> None:
         super().catch(player)
@@ -1263,7 +1290,7 @@ class FastBombBonus(Bonus):
 class BombRadiusBonus(Bonus):
     """Increase bomb radius"""
 
-    RATE = 0.2
+    RATE = 0.15
     MAX_RADIUS = 4
 
     def catch(self, player: Player) -> None:
@@ -1276,7 +1303,7 @@ class BombRadiusBonus(Bonus):
 class HeartBonus(Bonus):
     """Heal the player of 1 heart"""
 
-    RATE = 0.3
+    RATE = 0.15
 
     def catch(self, player: Player) -> None:
         super().catch(player)
@@ -1288,7 +1315,7 @@ class HeartBonus(Bonus):
 class FullHeartBonus(Bonus):
     """Heal fully the player"""
 
-    RATE = 0.15
+    RATE = 0.1
 
     def catch(self, player: Player) -> None:
         super().catch(player)
@@ -1300,8 +1327,8 @@ class FullHeartBonus(Bonus):
 class ShieldBonus(Bonus):
     """Shield the player"""
 
-    RATE = 0.2
-    SHIELD_DELAY = 6.0
+    RATE = 0.15
+    SHIELD_DELAY = 23.0
 
     def catch(self, player: Player) -> None:
         super().catch(player)
@@ -1313,8 +1340,8 @@ class ShieldBonus(Bonus):
 class FastBonus(Bonus):
     """Increase player speed"""
 
-    RATE = 0.2
-    FAST_DELAY = 7.0
+    RATE = 0.15
+    FAST_DELAY = 20.0
 
     def catch(self, player: Player) -> None:
         super().catch(player)

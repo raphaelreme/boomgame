@@ -79,6 +79,22 @@ class EntityView(view.Sprite, observer.Observer):
         pass
 
 
+class FakeEntityView(EntityView):
+    """Base class for Fake Entity
+
+    Easy to add special entities that only needs to do some stuff without any view
+    """
+
+    FILE_NAME = "heart.png"  # Need one but unused
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        pass
+
+
+class BreakableWallRemoverView(FakeEntityView):
+    pass
+
+
 class SolidWallView(EntityView):
     PRIORITY = 100
     FILE_NAME = "solid_wall.png"

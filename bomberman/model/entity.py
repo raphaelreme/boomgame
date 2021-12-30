@@ -178,6 +178,35 @@ class SolidWall(Entity):
     REPR = "S"
 
 
+class BreakableWallRemover(Entity):
+    """Fake entity that removes walls when a LightBoltBonus is caught"""
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self.sorted_walls = sorted(
+            filter(lambda entity: isinstance(entity, BreakableWall), self.maze.entities),
+            key=lambda wall: sum(wall.position),
+        )
+
+        self.removed = 0
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if self.removed == len(self.sorted_walls):
+            self.remove()
+            return
+
+        # Could delete according to delay
+        while self.sorted_walls[self.removed].removing_timer.is_active:
+            self.removed += 1
+            if self.removed == len(self.sorted_walls):
+                self.remove()
+                return
+
+        self.sorted_walls[self.removed].removing()
+
+
 class Bomb(Entity):
     VULNERABILITIES = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.0
@@ -1252,14 +1281,22 @@ class LightboltBonus(Bonus):
     """Remove all the breakable walls"""
 
     RATE = 0.05
-    # TODO: catch
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        self.maze.add_entity(BreakableWallRemover(self.maze, self.position))
 
 
 class SkullBonus(Bonus):
     """Kill all enemies"""
 
     RATE = 0.03
-    # TODO: catch
+
+    def catch(self, player: Player) -> None:
+        super().catch(player)
+        for entity in self.maze.entities:
+            if isinstance(entity, Enemy):
+                entity.removing()
 
 
 class BombCapacityBonus(Bonus):

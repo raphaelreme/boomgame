@@ -1,12 +1,14 @@
-"""Data model of the bomberman.
+"""Model of the bomberman.
 
-Defines all the data classes used in it.
+All the game logic is here.
 """
 
-__all__ = ["entity", "events", "maze"]
-
-
-# pylint: disable = wrong-import-position
 from . import entity
 from . import events
+from . import game
 from . import maze
+from . import timer
+from . import vector
+
+
+__all__ = ["entity", "events", "game", "maze", "timer", "vector"]

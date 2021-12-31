@@ -1,4 +1,4 @@
-"""Defines the main classes used in the observer/observable designe pattern."""
+"""Defines the main classes used in the observer/observable design pattern."""
 
 from . import event
 from . import observable

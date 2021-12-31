@@ -1,3 +1,5 @@
+"""Entry point of the game"""
+
 from typing import Dict, List
 
 import pygame

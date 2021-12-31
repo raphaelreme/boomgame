@@ -1,6 +1,6 @@
 """Main part of the model: class Maze.
 
-It holds all the data of the game.
+It holds all the data of current level.
 """
 
 from __future__ import annotations

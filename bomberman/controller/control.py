@@ -1,4 +1,4 @@
-"""Defines all the control key for the game"""
+"""Defines all the control keys for the game"""
 
 from __future__ import annotations
 

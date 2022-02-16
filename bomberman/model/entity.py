@@ -66,7 +66,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
             Default to (1, 1) (One tile large)
         VULNERABILIES (List[Damage.Type]): Vulnerabilies of the entity.
             Default to [] (Cannot take damage and is therefore invulnerable)
-        REMOVING_DELAY (int): Time in removing state
+        REMOVING_DELAY (float): Time in removing state
             Default to 0 (Immediately removed.)
     """
 
@@ -152,6 +152,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
     def removing(self) -> None:
         self.removing_timer.start(self.REMOVING_DELAY)
+        self.changed(events.StartRemovingEvent(self))
 
     def remove(self) -> None:
         self.maze.remove_entity(self)
@@ -445,14 +446,14 @@ class MovingEntity(Entity):
         """Try to teleport the entity"""
         assert self.position.int_part() == self.position
 
-        for entity in self.maze.entities:
-            if not isinstance(entity, Teleporter):
+        for teleporter in self.maze.entities:
+            if not isinstance(teleporter, Teleporter):
                 continue
 
-            if not entity.position == self.position:
+            if not teleporter.position == self.position:
                 continue
 
-            next_teleporter = entity.next_teleporter
+            next_teleporter = teleporter.next_teleporter
 
             if next_teleporter is None:
                 return
@@ -461,7 +462,8 @@ class MovingEntity(Entity):
             self.prev_position = self.position
             self.is_still_since = 0.0
 
-            entity.teleport()
+            teleporter.teleport()
+            teleporter.changed(events.NoiseEvent(teleporter))
             next_teleporter.teleport()
             return
 
@@ -570,6 +572,7 @@ class Flash(Entity):
         self.removing_timer.start(self.REMOVING_DELAY)
 
 
+# TODO: Handle success image and sound
 class Player(MovingEntity):
     """Player entity.
 
@@ -716,6 +719,8 @@ class Player(MovingEntity):
 
         if self.health:
             self.shield.start(self.HIT_SHIELD)
+            self.changed(events.NoiseEvent(self))
+
         return True
 
     def update(self, delay: float) -> None:
@@ -752,11 +757,15 @@ class Enemy(MovingEntity):
     BULLET_CLASS: Optional[EntityClass] = None
     FIRING_DELAY = 0.15
     RELOADING_DELAY = 1.0
+    MIN_YELL_DELAY = 7.0  # Minimum delay between two NoiseEvent
+    MAX_YELL_DELAY = 40.0  # Maximum delay between two NoiseEvent
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
         self.reload_timer = timer.Timer()
         self.firing_timer = timer.Timer()
+        self.noise_timer = timer.Timer()
+        self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
 
     def _update_direction(self) -> None:
         plausible_directions = []
@@ -794,6 +803,9 @@ class Enemy(MovingEntity):
 
     def update(self, delay: float) -> None:
         super().update(delay)
+
+        if self.noise_timer.update(delay):
+            self.yell()
 
         if self.firing_timer.update(delay):
             self.firing_timer.reset()
@@ -870,6 +882,11 @@ class Enemy(MovingEntity):
         self.reload_timer.start(self.RELOADING_DELAY)
         self.speed = 0
 
+    def yell(self):
+        self.changed(events.NoiseEvent(self))
+        self.noise_timer.reset()
+        self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
+
 
 # XXX: Ugly
 Enemy.BOUNCE_ON = (Enemy,)
@@ -897,8 +914,10 @@ class Taur(Enemy):
     BASE_SPEED = 4.0
     CHASE = True
     DAMAGE = 2
-    FIRING_DELAY = 0.10
-    RELOADING_DELAY = 0.20
+    FIRING_DELAY = 0.20
+    RELOADING_DELAY = 0.40
+    MIN_YELL_DELAY = 999999  # No random yell
+    MAX_YELL_DELAY = 999999
 
     def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
         distance = super()._check_player_on(direction)
@@ -925,6 +944,7 @@ class Taur(Enemy):
         self.firing_timer.reset()
         self.firing_timer.start(self.FIRING_DELAY)
         self.reload_timer.start(self.RELOADING_DELAY)
+        self.yell()
 
 
 class Gunner(Enemy):
@@ -940,12 +960,15 @@ class Thing(Enemy):
 
 
 class Ghost(Enemy):
+    # FIXME: Reset sprint when teleport
     REPR = "6"
     CHASE = True
     DAMAGE = 2
     FAST_SPEED = 7.0
     FIRING_DELAY = float("inf")
     RELOADING_DELAY = 1.5
+    MIN_YELL_DELAY = 999999  # No random yell
+    MAX_YELL_DELAY = 999999
 
     def attack(self, distance: float) -> None:
         assert self.current_direction
@@ -954,6 +977,7 @@ class Ghost(Enemy):
         self.firing_timer.start(self.FIRING_DELAY)
         self.reload_timer.start(self.RELOADING_DELAY)
         self.speed = self.FAST_SPEED
+        self.yell()
 
     def _switch_direction(self) -> None:
         # Stop sprint if bounce on smthg
@@ -1019,6 +1043,8 @@ class Head(Enemy):
     RELOADING_DELAY = 3.6
     FIRING_DELAY = 1.2
     SCOPE = 9
+    MIN_YELL_DELAY = 999999  # No random yell
+    MAX_YELL_DELAY = 999999
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
@@ -1036,6 +1062,7 @@ class Head(Enemy):
             return False
 
         self.hit_by.add(damage.entity)
+        self.yell()
         return super().hit(damage)
 
     def update(self, delay: float) -> None:
@@ -1263,6 +1290,7 @@ class Bonus(Entity, metaclass=BonusClass):
 
     def catch(self, player: Player) -> None:
         """Called when a player catches a bonus"""
+        self.changed(events.NoiseEvent(self))
         self.remove()
 
     def update(self, delay: float) -> None:

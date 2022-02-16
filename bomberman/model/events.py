@@ -69,7 +69,7 @@ class HitEntityEvent(EntityEvent):
 
 
 class RemovingEntityEvent(EntityEvent):
-    pass
+    """Each time the entity is removing"""
 
 
 class RemovedEntityEvent(EntityEvent):
@@ -82,3 +82,11 @@ class LifeLossEvent(EntityEvent):
 
 class PlayerDetailsEvent(EntityEvent):
     """When a player details has to be updated"""
+
+
+class NoiseEvent(EntityEvent):
+    """At each entity noise (Not all sounds)"""
+
+
+class StartRemovingEvent(EntityEvent):
+    """when the entity reaches removing state"""

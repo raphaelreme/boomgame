@@ -11,6 +11,7 @@ import pygame.locals
 from .controller import control
 from .controller import controller
 from .model import game
+from .sound import game_sound
 from .view import game_view
 
 # TODO: Menu + Settings
@@ -48,6 +49,7 @@ class BoomGame:
         model = game.GameModel(self.game_name, self.two_players)
         model.maze_solved = self.maze_solved
         main_view = game_view.GameView(model)
+        main_sound = game_sound.GameSound(model)
 
         pygame.display.set_mode(main_view.size)
         pygame.display.set_caption(f"{BoomGame.name} - level {model.maze_solved + 1}")

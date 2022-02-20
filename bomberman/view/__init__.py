@@ -7,7 +7,7 @@ the window.
 from typing import Tuple
 
 
-RATIO = 1.5
+RATIO = 1.0
 TILE_SIZE = (int(32 * RATIO), int(32 * RATIO))
 
 

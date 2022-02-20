@@ -51,7 +51,7 @@ class BoomGame:
         main_view = game_view.GameView(model)
         main_sound = game_sound.GameSound(model)
 
-        pygame.display.set_mode(main_view.size)
+        pygame.display.set_mode(main_view.size, pygame.locals.RESIZABLE)  # type: ignore
         pygame.display.set_caption(f"{BoomGame.name} - level {model.maze_solved + 1}")
         # pygame.display.set_icon(view.load_image("boom.png", (10, 10)))
 

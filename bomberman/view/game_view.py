@@ -4,6 +4,7 @@ from typing import Tuple
 import pygame
 import pygame.surface
 import pygame.rect
+import pygame.transform
 
 from ..designpattern import event
 from ..designpattern import observer
@@ -53,27 +54,33 @@ class GameView(view.View, observer.Observer):
             self.bonus_text.set_text(f"TIME BONUS!\n{int(time * 10)}")
 
     def display(self, surface: pygame.surface.Surface) -> None:
-        # Display the game in the middle of the main surface
         if self.model.state == game.GameModel.State.MENU:
             return
 
-        surface.fill((0, 0, 0))
+        # Let's draw on a temporary surface that matches the size
+        real_game_surface = pygame.surface.Surface(self.size).convert_alpha()
 
-        width, height = surface.get_size()
-        assert width >= self.size[0] and height >= self.size[1]
+        self.panel_view.display(real_game_surface.subsurface(self.panel_rect))
 
-        game_rect = pygame.rect.Rect(((width - self.size[0]) // 2, (height - self.size[1]) // 2), self.size)
-        game_surface = surface.subsurface(game_rect)
-
-        self.panel_view.display(game_surface.subsurface(self.panel_rect))
-
-        maze_surface = game_surface.subsurface(self.maze_rect)
+        maze_surface = real_game_surface.subsurface(self.maze_rect)
         if self.model.state == game.GameModel.State.RUNNING:
             self.maze_view.display(maze_surface)
         elif self.model.state == game.GameModel.State.START_SCREEN:
             self.start_text.display(maze_surface)
         else:
             self.bonus_text.display(maze_surface)
+
+        # Draw on the real surface and inflate at maximum size
+        surface.fill((0, 0, 0))
+
+        width, height = surface.get_size()
+        ratio = min(width / self.size[0], height / self.size[1])
+        game_size = (int(self.size[0] * ratio), int(self.size[1] * ratio))
+
+        game_rect = pygame.rect.Rect(((width - game_size[0]) // 2, (height - game_size[1]) // 2), game_size)
+        inflated_game_surface = surface.subsurface(game_rect)
+
+        pygame.transform.scale(real_game_surface, game_size, inflated_game_surface)
 
 
 class CenteredText(view.View):

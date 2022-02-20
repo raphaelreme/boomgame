@@ -27,6 +27,7 @@ class MazeDescriptionError(MazeException):
     pass
 
 
+# TODO: Extra Game -> 30s en alien + pieces + panneau extra game
 class Maze(observable.Observable):
     """Handle all entities in the maze.
 

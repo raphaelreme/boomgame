@@ -11,6 +11,7 @@ from ..designpattern import event, observer
 from ..model import entity, events
 
 
+# FIXME: Stop sound when removed ? (for bombs for example)
 class EntitySound(observer.Observer):
     """Sound for entities
 

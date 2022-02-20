@@ -573,6 +573,7 @@ class Flash(Entity):
 
 
 # TODO: Handle success image and sound
+# FIXME: When killed at the end of a maze. Restart without going through remove and new life
 class Player(MovingEntity):
     """Player entity.
 

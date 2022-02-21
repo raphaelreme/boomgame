@@ -5,9 +5,9 @@
  | | | | | | |B| | | | | | | 
 S|S|B|S|B|S| |S| |S|B|S|B|S|S
 T|S|5| | | | |B| | | | |5|S|T
- |S| |S|B|S|B|S|B|S|B|S| |S| 
- |B| |B| | | | | | | |B| |B| 
- |S| |S| |S| |S| |S| |S| |S| 
- |B| |B|6|B| |B| |B|6|B| |B| 
- |S| |S|B|S| |S| |S|B|S| |S| 
- | | | | | | |B| | | | | | | 
+C|S| |S|B|S|B|S|B|S|B|S| |S|C
+C|B| |B| | |C|C|C| | |B| |B|C
+C|S| |S| |S| |S| |S| |S| |S|C
+C|B| |B|6|B| |B| |B|6|B| |B|C
+C|S| |S|B|S| |S| |S|B|S| |S|C
+ | | |C|C|C| |B| |C|C|C| | | 

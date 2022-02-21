@@ -1,13 +1,13 @@
-S| | | | | | |T| | | | | | |S
- |S|B|S| |S|B|S|B|S| |S|B|S| 
- |B|S| | | | |8| | | | |S|B| 
- |S| |S|S|S|S|S|S|S|S|S| |S| 
- | | |S| | | |3| | | |S| | | 
+S|C|C|C|C| | |T| | |C|C|C|C|S
+C|S|B|S|C|S|B|S|B|S|C|S|B|S|C
+C|B|S|C|C| | |8| | |C|C|S|B|C
+C|S|C|S|S|S|S|S|S|S|S|S|C|S|C
+C|C|C|S| | | |3| | | |S|C|C|C
  |S| |S| |S|B|S|B|S| |S| |S| 
 T|B|7|S|3|B|X|T|Y|B|3|S|7|B|T
  |S| |S| |S|B|S|B|S| |S| |S| 
- | | |S| | | |3| | | |S| | | 
- |S| |S|S|S|S|S|S|S|S|S| |S| 
- |B|S| | | | |8| | | | |S|B| 
- |S|B|S| |S|B|S|B|S| |S|B|S| 
-S| | | | | | |T| | | | | | |S
+C|C|C|S| | | |3| | | |S|C|C|C
+C|S|C|S|S|S|S|S|S|S|S|S|C|S|C
+C|B|S|C|C| | |8| | |C|C|S|B|C
+C|S|B|S|C|S|B|S|B|S|C|S|B|S|C
+S|C|C|C|C| | |T| | |C|C|C|C|S

@@ -6,8 +6,8 @@ B|S|B|S|B|S|B|S|B|S|B|S|B|S|B
 4|S|4|S| |S|S|S|S|S| |S|4|S|4
  | | | |B|S|S|B|S|S|B| | | | 
 B|S|B|S|S|S|B|S|B|S|S|S|B|S|B
- | |B|S|S|B| | | |B|S|S|B| | 
-T|S|S|S|B|S| |S| |S|B|S|S|S|T
-B|S|S|B| | | | | | | |B|S|S|B
-S|S|B|S| |S|0|S|0|S| |S|B|S|S
-S|B| | | | | |T| | | | | |B|S
+ | |B|S|S|B|C|C|C|B|S|S|B| | 
+T|S|S|S|B|S|C|S|C|S|B|S|S|S|T
+B|S|S|B|C|C|C|C|C|C|C|B|S|S|B
+S|S|B|S|C|S|0|S|0|S|C|S|B|S|S
+S|B|C|C|C| | |T| | |C|C|C|B|S

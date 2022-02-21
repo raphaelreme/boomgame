@@ -4,10 +4,10 @@ S|S|S|S|B|S|S|S|S|S|B|S|S|S|S
  |S| |S|S|S| |S| |S|S|S| |S| 
  |B|B|B|B|S| |B| |S|B|B|B|B| 
  |S| |S| |S| |S| |S| |S| |S| 
-8|B| |B| |S| |B| |S| |B| |B|8
- |S| |S| |S|2|S|2|S| |S| |S| 
- |B| |B| |S| |B| |S| |B| |B| 
- |S| |S| |S| |S| |S| |S| |S| 
- |S| |T| |S| |B| |S| |T| |S| 
+8|B|C|B|C|S| |B| |S|C|B|C|B|8
+ |S|C|S|C|S|2|S|2|S|C|S|C|S| 
+ |B|C|B|C|S| |B| |S|C|B|C|B| 
+ |S|C|S|C|S| |S| |S|C|S|C|S| 
+ |S|C|T|C|S| |B| |S|C|T|C|S| 
 B|S|S|S|S|S| |S| |S|S|S|S|S|B
 B|B| | |7| | |B| | |7| | |B|B

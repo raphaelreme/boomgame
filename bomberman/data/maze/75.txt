@@ -2,12 +2,12 @@ B|B|B|B|B|B| |9| |B|B|B|B|B|B
 B|S|X|S|B|S| |S| |S|B|S|Y|S|B
  | | | | |S| |S| |S| | | | | 
 B|S|B|S|B|S| |S| |S|B|S|B|S|B
- |B| |B| |S| |S| |S| |B| |B| 
-7|S| |S| |S| |S| |S|6|S| |S| 
- |B| |B| |S|9|S|9|S| |B| |B| 
- |S| |S|6|S| |S| |S| |S| |S|7
- |B| |B| |S| |S| |S| |B| |B| 
+ |B|C|B| |S| |S| |S| |B|C|B| 
+7|S|C|S| |S| |S| |S|6|S|C|S| 
+ |B|C|B| |S|9|S|9|S| |B|C|B| 
+ |S|C|S|6|S| |S| |S| |S|C|S|7
+ |B|C|B| |S| |S| |S| |B|C|B| 
 B|S|B|S|B|S| |S| |S|B|S|B|S|B
- | | | | |S| |S| |S| | | | | 
+C|C|C|C|C|S| |S| |S|C|C|C|C|C
 B|S|B|S|B|S| |S| |S|B|S|B|S|B
 T| | | |B|B| |9| |B|B| | | |T

@@ -95,6 +95,13 @@ class BreakableWallRemoverView(FakeEntityView):
     pass
 
 
+class CoinView(EntityView):
+    FILE_NAME = "coin.png"
+    ROWS = 1
+    COLUMNS = 10
+    REMOVING_STEPS = [(0, i) for i in range(10)] * 10
+
+
 class SolidWallView(EntityView):
     PRIORITY = 100
     FILE_NAME = "solid_wall.png"

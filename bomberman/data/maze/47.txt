@@ -2,11 +2,11 @@ B|B| |2| | | |T| | | | |4|B|B
 B|S|S|S|B|S|S|S|S|S|B|S|S|S|B
  | |S| |6| | |S| | | |6|S| | 
  |S|S|S|S|S|S|S|S|S|S|S|S|S| 
- |S| | | | | |T| | | | | |S| 
- |S| |S|S|S|S|S|S|S|S|S| |S| 
-X|S| |S| | | |T| | | |S| |S|Y
- |S| |S|S|S|S|S|S|S|S|S| |S| 
- |S| | | | | |T| | | | | |S| 
+ |S|C|C| | | |T| | | |C|C|S| 
+ |S|C|S|S|S|S|S|S|S|S|S|C|S| 
+X|S|C|S|C|C|C|T|C|C|C|S|C|S|Y
+ |S|C|S|S|S|S|S|S|S|S|S|C|S| 
+ |S|C|C| | | |T| | | |C|C|S| 
  |S|S|S|S|S|S|S|S|S|S|S|S|S| 
  | |S|6| | | |S| | |6| |S| | 
 B|S|S|S|B|S|S|S|S|S|B|S|S|S|B

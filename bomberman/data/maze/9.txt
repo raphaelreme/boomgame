@@ -3,11 +3,11 @@ X| | | |B|B| |1| |B|B| | | |Y
 B|B|B|B|B|B| | | |B|B|B|B|B|B
 0|S| |S| |S| |S| |S| |S| |S|0
  | | | | |B| |B| |B| | | | | 
- |S| |S| |S| |S| |S| |S| |S| 
+C|S|C|S|C|S| |S| |S|C|S|C|S|C
 S|S|S|S|S|S|2|S|2|S|S|S|S|S|S
 0|S| |S| |S| |S| |S| |S| |S|0
  | | | | |B| |B| |B| | | | | 
- |S| |S| |S| |S| |S| |S| |S| 
+C|S|C|S|C|S| |S| |S|C|S|C|S|C
 B|B|B|B|B|B| | | |B|B|B|B|B|B
  |S| |S|B|S|B|S|B|S|B|S| |S| 
- |B| |B| |B| |1| |B| |B| |B| 
+C|B|C|B|C|B| |1| |B|C|B|C|B|C

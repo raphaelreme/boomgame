@@ -161,6 +161,18 @@ class Entity(observable.Observable, metaclass=EntityClass):
         return f"{self.__class__.__name__} at {self.colliding_rect}"
 
 
+class Coin(Entity):
+    REPR = "C"
+    REMOVING_DELAY = 1.5
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        if not self.removing_timer.is_active:
+            if self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player)):
+                self.removing()
+
+
 class BreakableWall(Entity):
     REPR = "B"
     VULNERABILITIES = [Damage.Type.BOMBS]

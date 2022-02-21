@@ -1,13 +1,13 @@
 X| | |S|S|S|S|S|S|S|S|S| | |Y
- |S|B|S| |S| |S| |S| |S|B|S| 
- |B|7|S| | | |S| | | |S| |B| 
+ |S|B|S|C|S|C|S|C|S|C|S|B|S| 
+ |B|7|S|C|C|C|S|C|C|C|S| |B| 
  |S| |S|B|S|B|S|B|S|B|S|7|S| 
  |B| | |S|B|B|S|B|B|S| | |B| 
  |S|7|S| |S|B|S|B|S| |S| |S| 
 T|B| | | |1|B|S|B|1| | |7|B|T
  |S| |S| |S|B|S|B|S| |S| |S| 
- |B|7| |S| | |S| | |S| | |B| 
- |S| |S| |S| |S| |S| |S|7|S| 
- |B| |S| | |B|S|B| | |S| |B| 
- |S|B|S| |S|B|S|B|S| |S|B|S| 
+ |B|7| |S|C|C|S|C|C|S| | |B| 
+ |S| |S|C|S|C|S|C|S|C|S|7|S| 
+ |B| |S|C|C|B|S|B|C|C|S| |B| 
+ |S|B|S|C|S|B|S|B|S|C|S|B|S| 
  | | |S|S|S|S|S|S|S|S|S| | | 

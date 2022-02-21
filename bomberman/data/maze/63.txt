@@ -1,4 +1,4 @@
- | | | | | | | | | | | | | | 
+C|C|C|C|C|C|C|C|C|C|C|C|C|C|C
 B|S|B|S|B|S|B|T|B|S|B|S|B|S|B
 B| |8| | | | |S| | | | |8| |B
 B|S|S|S|S|S|S|S|S|S|S|S|S|S|B

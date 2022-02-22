@@ -778,6 +778,7 @@ class Enemy(MovingEntity):
         self.firing_timer = timer.Timer()
         self.noise_timer = timer.Timer()
         self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
+        self.fast = False
 
     def _update_direction(self) -> None:
         plausible_directions = []
@@ -813,8 +814,21 @@ class Enemy(MovingEntity):
 
         self.current_direction = random.choice(plausible_directions)
 
+    def enraged(self) -> None:
+        """Called when the time is up.
+
+        The enemy is twice faster.
+        """
+        self.fast = True
+
     def update(self, delay: float) -> None:
+        if self.fast and not self.removing_timer.is_active:
+            delay *= 2  # Twice faster for everything
+
         super().update(delay)
+
+        if self.removing_timer.is_active:
+            return
 
         if self.noise_timer.update(delay):
             self.yell()
@@ -825,9 +839,6 @@ class Enemy(MovingEntity):
 
         if self.reload_timer.update(delay):
             self.reload_timer.reset()
-
-        if self.removing_timer.is_active:
-            return
 
         for entity in self.maze.get_collision(self.colliding_rect):
             entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
@@ -1082,6 +1093,9 @@ class Head(Enemy):
 
         if self.removing_timer.is_active:
             return
+
+        if self.fast:
+            delay *= 2
 
         for entity in self.maze.get_collision(self.colliding_rect):  # From Enemy
             entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine

@@ -53,7 +53,7 @@ class Maze(observable.Observable):
     END_DELAY = 2.0
     GAME_OVER_DELAY = 4.0
     EXTRA_GAME_DELAY = 30.0
-    HURRY_UP_DELAY = 31.0
+    HURRY_UP_DELAY = 30.0
 
     def __init__(self, size: Tuple[int, int]) -> None:
         super().__init__()
@@ -159,7 +159,9 @@ class Maze(observable.Observable):
             pass  # TODO: End extra game enemies
 
         if self.hurry_up_timer.update(delay):
-            pass  # TODO: Boost enemies speed
+            for entity_ in self.entities:
+                if isinstance(entity_, entity.Enemy):
+                    entity_.enraged()
 
         # XXX: The state cannot change even if a player bombs itself during the end timer
         if self.end_timer.is_active:

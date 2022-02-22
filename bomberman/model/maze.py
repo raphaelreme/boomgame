@@ -27,7 +27,6 @@ class MazeDescriptionError(MazeException):
     pass
 
 
-# TODO: Extra Game -> 30s en alien + pieces + panneau extra game
 class Maze(observable.Observable):
     """Handle all entities in the maze.
 
@@ -39,6 +38,8 @@ class Maze(observable.Observable):
         entities (List[Entity]): All the entity in the maze.
         player_spawns (Dict[int, entity.Position]): Spawn position for each player
         end_timer (timer.Timer): Timer of the end of the maze
+        extra_game_timer (timer.Timer): Timer for the extra game
+        hurry_up_timer (timer.Timer): Timer in hurry up
     """
 
     class State(enum.Enum):
@@ -50,6 +51,9 @@ class Maze(observable.Observable):
     VOID = " "
     PLAYER_SPAWNS = {"X": 1, "Y": 2}
     END_DELAY = 2.0
+    GAME_OVER_DELAY = 4.0
+    EXTRA_GAME_DELAY = 30.0
+    HURRY_UP_DELAY = 31.0
 
     def __init__(self, size: Tuple[int, int]) -> None:
         super().__init__()
@@ -58,6 +62,8 @@ class Maze(observable.Observable):
         self.entities: Set[entity.Entity] = set()
         self.player_spawns: Dict[int, vector.Vector] = {}
         self.end_timer = timer.Timer()
+        self.extra_game_timer = timer.Timer()
+        self.hurry_up_timer = timer.Timer()
 
     def add_entity(self, entity_: entity.Entity) -> None:
         """Register a new entity in the maze.
@@ -133,6 +139,12 @@ class Maze(observable.Observable):
         """
         return len(list(filter(lambda entity_: isinstance(entity_, entity.Player), self.entities)))
 
+    def hurry_up(self) -> None:
+        """Called by the game when the time is almost up"""
+        if not self.hurry_up_timer.is_active:
+            self.hurry_up_timer.start(self.HURRY_UP_DELAY)
+            self.changed(events.HurryUpEvent())
+
     def update(self, delay: float) -> None:
         """Handle time forwarding.
 
@@ -143,22 +155,31 @@ class Maze(observable.Observable):
         for entity_ in self.entities.copy():
             entity_.update(delay)
 
+        if self.extra_game_timer.update(delay):
+            pass  # TODO: End extra game enemies
+
+        if self.hurry_up_timer.update(delay):
+            pass  # TODO: Boost enemies speed
+
         # XXX: The state cannot change even if a player bombs itself during the end timer
         if self.end_timer.is_active:
             self.end_timer.update(delay)
-            self.changed(events.MazeEndingEvent())
+            # self.changed(events.MazeEndingEvent())
             return
 
-        players, enemies = 0, 0
+        players, enemies, coins = 0, 0, 0
         for entity_ in self.entities:
             if isinstance(entity_, entity.Player):
                 players += 1
             if isinstance(entity_, entity.Enemy):
                 enemies += 1
+            if isinstance(entity_, entity.Coin):
+                if not entity_.removing_timer.is_active:
+                    coins += 1
 
         if not players:
             self.state = Maze.State.FAILED
-            self.end_timer.start(Maze.END_DELAY)
+            self.end_timer.start(self.GAME_OVER_DELAY)
             self.changed(events.MazeFailedEvent())
             return
 
@@ -166,6 +187,13 @@ class Maze(observable.Observable):
             self.state = Maze.State.SOLVED
             self.end_timer.start(Maze.END_DELAY)
             self.changed(events.MazeSolvedEvent())
+            return
+
+        if not coins:
+            if not self.extra_game_timer.is_active:
+                self.extra_game_timer.start(self.EXTRA_GAME_DELAY)
+                self.changed(events.ExtraGameEvent())
+                # TODO: Extra game enemies
 
     def __str__(self) -> str:
         identifier_to_repr = {i: r for r, i in Maze.PLAYER_SPAWNS.items()}
@@ -203,6 +231,7 @@ class Maze(observable.Observable):
         rows = len(matrix)
         columns = len(matrix[0])
         maze = Maze((rows, columns))
+        has_coin = False
 
         teleporters: List[entity.Teleporter] = []
 
@@ -224,6 +253,9 @@ class Maze(observable.Observable):
                 if not klass:
                     raise MazeDescriptionError(f"Unknown identifier: '{char}' at {(i, j)}")
 
+                if klass is entity.Coin:
+                    has_coin = True
+
                 entity_ = klass(maze, vector.Vector((float(i), float(j))))
                 maze.entities.add(entity_)
 
@@ -232,6 +264,9 @@ class Maze(observable.Observable):
 
         for i in range(len(teleporters)):
             teleporters[i].next_teleporter = teleporters[(i + 1) % len(teleporters)]
+
+        if not has_coin:
+            maze.extra_game_timer.start(float("inf"))  # Prevent Extra Game
 
         return maze
 

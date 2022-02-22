@@ -151,3 +151,5 @@ class GameModel(observable.Observable):
             self.end_maze(self.maze.state == maze.Maze.State.SOLVED)
 
         self.time -= delay
+        if self.time < self.maze.HURRY_UP_DELAY:
+            self.maze.hurry_up()

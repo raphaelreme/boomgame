@@ -1,5 +1,8 @@
 """Handle the Maze to display it on the screen."""
 
+import time
+from typing import List, Tuple
+
 import pygame
 import pygame.rect
 import pygame.surface
@@ -46,6 +49,9 @@ class MazeView(view.View, observer.Observer):
         for view_ in self.entity_views:
             view_.set_style(style)
 
+        # Sliders
+        self.sliders_views: List[SliderView] = []
+
     def _build_background(self, style: int) -> None:
         """Build the background surface for the given style"""
         background_sprite = view.load_image(self.background_file, inflate_to_reality((8, 1)))
@@ -85,14 +91,82 @@ class MazeView(view.View, observer.Observer):
         for view_ in sorted(self.entity_views):
             view_.display(maze_surface)
 
+        # Display sliders
+        for slider in self.sliders_views:
+            slider.display(surface)
+
     def notify(self, event_: event.Event) -> None:
         if isinstance(event_, events.NewEntityEvent):
             self.entity_views.add(entity_view.EntityView.from_entity(event_.entity))
             event_.handled = True
             return
+
         if isinstance(event_, events.RemovedEntityEvent):
             for view_ in self.entity_views:
                 if view_.entity == event_.entity:  # FIXME: Directly remove ?
                     self.entity_views.remove(view_)
                     event_.handled = True
                     return
+
+        if isinstance(event_, events.MazeFailedEvent):
+            self.sliders_views.append(GameOverSlider(self.size))
+            return
+
+        if isinstance(event_, events.ExtraGameEvent):
+            self.sliders_views.append(ExtraGameSlider(self.size))
+            return
+
+        if isinstance(event_, events.HurryUpEvent):
+            self.sliders_views.append(HurryUpSlider(self.size))
+            return
+
+
+class SliderView(view.ImageView):
+    """Specific view that display an image by sliding it from top to bottom
+
+    Used for ExtraGame, GameOver and HurryUp images
+    """
+
+    FILE_NAME: str
+    SLIDE_IN = 0.7
+    SLIDE_STILL = SLIDE_IN + 1.4
+    SLIDE_OUT = SLIDE_STILL + 0.7
+
+    def __init__(self, maze_size: Tuple[int, int]) -> None:
+        super().__init__(view.load_image(self.FILE_NAME), (0, 0))
+        self.start_time = time.time()
+        self.maze_size = maze_size
+
+        self.x_position = (self.maze_size[0] - self.size[0]) // 2
+        self.y_position_init = -self.size[1]
+        self.y_position_mid = (self.maze_size[1] - self.size[1]) // 2
+        self.y_position_final = self.maze_size[1]
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        delay = time.time() - self.start_time
+
+        if delay > self.SLIDE_OUT:
+            return
+
+        if delay <= self.SLIDE_IN:
+            t = delay / self.SLIDE_IN
+            self.position = (self.x_position, int(self.y_position_init * (1 - t) + self.y_position_mid * t))
+        elif delay <= self.SLIDE_STILL:
+            self.position = (self.x_position, self.y_position_mid)
+        elif delay <= self.SLIDE_OUT:
+            t = (delay - self.SLIDE_STILL) / (self.SLIDE_OUT - self.SLIDE_STILL)
+            self.position = (self.x_position, int(self.y_position_mid * (1 - t) + self.y_position_final * t))
+
+        super().display(surface)
+
+
+class GameOverSlider(SliderView):
+    FILE_NAME = "game_over.png"
+
+
+class HurryUpSlider(SliderView):
+    FILE_NAME = "hurry_up.png"
+
+
+class ExtraGameSlider(SliderView):
+    FILE_NAME = "extra_game.png"

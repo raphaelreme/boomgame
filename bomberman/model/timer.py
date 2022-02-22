@@ -24,7 +24,7 @@ class Timer:
         current (float): Either the time left (decrease mode), or time elapsed (increase mode)
     """
 
-    def __init__(self, increase=True) -> None:
+    def __init__(self, increase: bool = True) -> None:
         self.increase = increase
         self.is_active = False
         self.total = 0.0

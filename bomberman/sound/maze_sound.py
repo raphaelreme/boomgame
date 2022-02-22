@@ -10,11 +10,14 @@ from ..model import events, maze
 from . import entity_sound
 
 
+# TODO: Adjust volume of different sounds ?
 class MazeSound(observer.Observer):
     """Handle all the sounds of the maze"""
 
     solved = "MazeSolved.wav"
     failed = "MazeFailed.wav"
+    extra_game = "ExtraGame.wav"
+    hurry_up = "HurryUp.wav"
 
     def __init__(self, maze_: maze.Maze) -> None:
         """Constructor
@@ -32,6 +35,12 @@ class MazeSound(observer.Observer):
         )
         self.solved_sound = pygame.mixer.Sound(
             os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.solved)
+        )
+        self.extra_game_sound = pygame.mixer.Sound(
+            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.extra_game)
+        )
+        self.hurry_up_sound = pygame.mixer.Sound(
+            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.hurry_up)
         )
 
         # Set of all the views for each component of the maze
@@ -62,4 +71,12 @@ class MazeSound(observer.Observer):
         if isinstance(event_, events.MazeSolvedEvent):
             pygame.mixer.music.stop()
             self.solved_sound.play()
+            return
+
+        if isinstance(event_, events.ExtraGameEvent):
+            self.extra_game_sound.play()
+            return
+
+        if isinstance(event_, events.HurryUpEvent):
+            self.hurry_up_sound.play()
             return

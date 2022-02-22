@@ -46,6 +46,14 @@ class MazeEndingEvent(Event):
     """Each update of the maze, when it is ending"""
 
 
+class ExtraGameEvent(Event):
+    """At the beginning of the extra game"""
+
+
+class HurryUpEvent(Event):
+    """30s before time's up"""
+
+
 class EntityEvent(Event):
     def __init__(self, entity_: entity.Entity):
         super().__init__()

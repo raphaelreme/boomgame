@@ -475,7 +475,6 @@ class MovingEntity(Entity):
             self.is_still_since = 0.0
 
             teleporter.teleport()
-            teleporter.changed(events.NoiseEvent(teleporter))
             next_teleporter.teleport()
             return
 

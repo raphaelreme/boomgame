@@ -13,6 +13,7 @@ from .controller import controller
 from .model import game
 from .sound import game_sound
 from .view import game_view
+from .view import view
 
 # TODO: Menu + Settings
 
@@ -52,8 +53,8 @@ class BoomGame:
         main_sound = game_sound.GameSound(model)
 
         pygame.display.set_mode(main_view.size, pygame.locals.RESIZABLE)  # type: ignore
-        pygame.display.set_caption(f"{BoomGame.name} - level {model.maze_solved + 1}")
-        # pygame.display.set_icon(view.load_image("boom.png", (10, 10)))
+        pygame.display.set_caption("BOOM")
+        pygame.display.set_icon(view.load_image("game_icon.png"))
 
         model.start()
 

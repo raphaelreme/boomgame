@@ -65,6 +65,9 @@ class EntitySound(observer.Observer):
 
     @staticmethod
     def from_entity(entity_: entity.Entity) -> EntitySound:
+        if isinstance(entity_, entity.Enemy):
+            return EnemySound(entity_)
+
         if isinstance(entity_, entity.Player):
             return PlayerSound(entity_)
 
@@ -89,3 +92,36 @@ class PlayerSound(EntitySound):
 class BonusSound(EntitySound):
     def _build_sound_name(self) -> str:
         return "Bonus"
+
+
+# A bit ugly... Cannot handle spawn sound of alien but there is none
+# so let's keep it that way for now
+class AlienSound(EntitySound):
+    def _build_sound_name(self) -> str:
+        return "Alien"
+
+    def notify(self, event_: event.Event) -> None:
+        pass  # Eveything is handled by Enemy Sound
+
+
+class EnemySound(EntitySound):
+    def __init__(self, entity_: entity.Entity) -> None:
+        super().__init__(entity_)
+        self.entity: entity.Enemy
+        self.alien_sound = AlienSound(self.entity)
+
+    def notify(self, event_: event.Event) -> None:
+        if not self.entity.is_alien:
+            return super().notify(event_)
+
+        if isinstance(event_, events.StartRemovingEvent):
+            sounds = self.alien_sound.get_sounds()
+            if "Removing" in sounds:
+                sounds["Removing"].play()
+                return
+
+        if isinstance(event_, events.NoiseEvent):
+            sounds = self.alien_sound.get_sounds()
+            if "Noise" in sounds:
+                sounds["Noise"].play()
+                return

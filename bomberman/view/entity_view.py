@@ -46,9 +46,6 @@ class EntityView(view.Sprite, observer.Observer):
         Args:
             event_ (event.Event): Event received from the observable.
         """
-        if event_.handled:
-            return
-
         if isinstance(event_, events.RemovingEntityEvent):
             if not self.entity.removing_timer.is_active:
                 print("WARNING: removing event without removing state:", self)
@@ -142,8 +139,6 @@ class BombView(EntityView):
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
-        if event_.handled:
-            return
 
         if isinstance(event_, events.ForwardTimeEvent):
             bomb = cast(entity.Bomb, event_.entity)
@@ -180,9 +175,6 @@ class TeleporterView(EntityView):
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
 
-        if event_.handled:
-            return
-
         if isinstance(event_, events.ForwardTimeEvent):
             teleporter = cast(entity.Teleporter, event_.entity)
             j = int(teleporter.alive_since.current / self.RATE) % self.COLUMNS
@@ -217,8 +209,6 @@ class MovingEntityView(EntityView):
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
-        if event_.handled:
-            return
 
         if isinstance(event_, events.MovedEntityEvent):
             entity_ = cast(entity.MovingEntity, event_.entity)
@@ -288,6 +278,15 @@ class PlayerView(MovingEntityView):
         surface.blit(image, self.position)
 
 
+class AlienView(MovingEntityView):
+    """Enemy view for all enemies in extra game"""
+
+    FILE_NAME = "alien.png"
+    ROWS = 5
+    COLUMNS = 4
+    REMOVING_STEPS = [(4, 0), (4, 1)] * 10
+
+
 class EnemyView(MovingEntityView):
     """Base view class for enemies"""
 
@@ -300,14 +299,22 @@ class EnemyView(MovingEntityView):
     def __init__(self, entity_: entity.Enemy) -> None:
         self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
         super().__init__(entity_)
+        self.entity: entity.Enemy
+        self.alien_view = AlienView(self.entity)
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
 
         if isinstance(event_, events.MovedEntityEvent):
-            enemy = cast(entity.Enemy, event_.entity)
-            if enemy.firing_timer.is_active:
-                self.select_sprite(self.FIRING_ROW, self.direction_to_row[enemy.current_direction])
+            if self.entity.firing_timer.is_active:
+                self.select_sprite(self.FIRING_ROW, self.direction_to_row[self.entity.current_direction])
+            return
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        if self.entity.is_alien:
+            self.alien_view.display(surface)
+        else:
+            super().display(surface)
 
 
 class SoldierView(EnemyView):
@@ -389,8 +396,6 @@ class BulletView(EntityView):
 
     def notify(self, event_: event.Event) -> None:
         super().notify(event_)
-        if event_.handled:
-            return
 
         if isinstance(event_, events.MovedEntityEvent):
             self.position = inflate_to_reality(event_.entity.position)

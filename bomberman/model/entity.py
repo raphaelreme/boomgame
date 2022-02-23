@@ -779,6 +779,7 @@ class Enemy(MovingEntity):
         self.noise_timer = timer.Timer()
         self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
         self.fast = False
+        self.is_alien = False
 
     def _update_direction(self) -> None:
         plausible_directions = []
@@ -821,6 +822,17 @@ class Enemy(MovingEntity):
         """
         self.fast = True
 
+    def extra_game(self, active: bool) -> None:
+        """Called to activate or deactivate extra game
+
+        Args:
+            active (bool): Whether to activate or deactivate the alien mode
+        """
+        self.is_alien = active
+        self.firing_timer.reset()
+        self.reload_timer.reset()
+        self.speed = self.BASE_SPEED
+
     def update(self, delay: float) -> None:
         if self.fast and not self.removing_timer.is_active:
             delay *= 2  # Twice faster for everything
@@ -842,6 +854,9 @@ class Enemy(MovingEntity):
 
         for entity in self.maze.get_collision(self.colliding_rect):
             entity.hit(Damage(self, self.DAMAGE, Damage.Type.ENEMIES))  # Hit itself but fine
+
+        if self.is_alien:  # Alien cannot attack
+            return
 
         if self.current_direction:
             distance = self._check_player_on(self.current_direction)
@@ -1087,6 +1102,9 @@ class Head(Enemy):
         self.hit_by.add(damage.entity)
         self.yell()
         return super().hit(damage)
+
+    def extra_game(self, active: bool) -> None:
+        pass  # Never an alien
 
     def update(self, delay: float) -> None:
         Entity.update(self, delay)  # Don't call neither Enemy nor MovingEntity update

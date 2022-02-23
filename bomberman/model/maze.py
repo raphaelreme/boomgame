@@ -156,7 +156,11 @@ class Maze(observable.Observable):
             entity_.update(delay)
 
         if self.extra_game_timer.update(delay):
-            pass  # TODO: End extra game enemies
+            self.extra_game_timer.reset()
+            self.extra_game_timer.start(float("inf"))  # Block extra game timer
+            for entity_ in self.entities:
+                if isinstance(entity_, entity.Enemy):
+                    entity_.extra_game(False)
 
         if self.hurry_up_timer.update(delay):
             for entity_ in self.entities:
@@ -195,7 +199,9 @@ class Maze(observable.Observable):
             if not self.extra_game_timer.is_active:
                 self.extra_game_timer.start(self.EXTRA_GAME_DELAY)
                 self.changed(events.ExtraGameEvent())
-                # TODO: Extra game enemies
+                for entity_ in self.entities:
+                    if isinstance(entity_, entity.Enemy):
+                        entity_.extra_game(True)
 
     def __str__(self) -> str:
         identifier_to_repr = {i: r for r, i in Maze.PLAYER_SPAWNS.items()}

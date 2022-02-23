@@ -1368,7 +1368,8 @@ class SkullBonus(Bonus):
         super().catch(player)
         for entity in self.maze.entities:
             if isinstance(entity, Enemy):
-                entity.removing()
+                if not entity.removing_timer.is_active:
+                    entity.removing()
 
 
 class BombCapacityBonus(Bonus):

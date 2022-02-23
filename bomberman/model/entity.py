@@ -722,6 +722,14 @@ class Player(MovingEntity):
     def bomb_explodes(self) -> None:
         self.bomb_count -= 1
 
+    def add_letter(self, letter_id: int) -> None:
+        self.extra[letter_id] = True
+        if sum(self.extra) == 5:
+            self.extra = [False] * 5
+            self.life += 1
+            # TODO: Create New life animation (Like score)
+        self.changed(events.PlayerDetailsEvent(self))
+
     def hit(self, damage: Damage) -> bool:
         if self.shield.is_active:
             return False
@@ -924,6 +932,11 @@ class Enemy(MovingEntity):
         self.changed(events.NoiseEvent(self))
         self.noise_timer.reset()
         self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
+
+    def remove(self) -> None:
+        super().remove()
+        if self.is_alien:
+            self.maze.add_entity(ExtraLetter(self.maze, self.position))
 
 
 # XXX: Ugly
@@ -1459,3 +1472,35 @@ class FastBonus(Bonus):
         player.fast.start(self.FAST_DELAY)
         player.speed = Player.BASE_SPEED * 2
         player.changed(events.PlayerDetailsEvent(player))
+
+
+class ExtraLetter(Entity):
+    """Extra Letter dropped by aliens"""
+
+    LETTER_DELAY = 2.0
+
+    def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
+        super().__init__(maze_, position)
+        self.letter_id = random.randint(0, 4)  # 0 = E, 4 = A
+        self.letter_timer = timer.Timer(increase=False)
+        self.letter_timer.start(self.LETTER_DELAY)
+
+    def catch(self, player: Player) -> None:
+        self.changed(events.NoiseEvent(self))
+        player.add_letter(self.letter_id)
+        self.remove()
+
+    def update(self, delay: float) -> None:
+        super().update(delay)
+
+        players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
+        if players:
+            self.catch(cast(Player, players.pop()))
+            return
+
+        if self.letter_timer.update(delay):
+            self.letter_timer.reset()
+            self.letter_id = (self.letter_id + 1) % 5
+            self.letter_timer.start(self.LETTER_DELAY)
+
+        self.changed(events.ForwardTimeEvent(self))

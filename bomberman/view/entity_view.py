@@ -546,3 +546,29 @@ class ShieldBonusView(BonusView):
 
 class FastBonusView(BonusView):
     pass
+
+
+class ExtraLetterView(EntityView):
+    """View of EXTRA Letter"""
+
+    FILE_NAME = "extra_letters.png"
+    PRIORITY = 15
+    ROWS = 5
+    COLUMNS = 4
+    TRANSITION_DELAY = 0.3
+
+    def __init__(self, entity_: entity.Entity) -> None:
+        super().__init__(entity_)
+        self.entity: entity.ExtraLetter
+        self.select_sprite(self.entity.letter_id, 0)
+
+    def notify(self, event_: event.Event) -> None:
+        super().notify(event_)
+
+        if isinstance(event_, events.ForwardTimeEvent):
+            if self.entity.letter_timer.current > self.TRANSITION_DELAY:
+                self.select_sprite(self.entity.letter_id, 0)
+                return
+
+            t = 1 - self.entity.letter_timer.current / self.TRANSITION_DELAY
+            self.select_sprite(self.entity.letter_id, int(4 * t))

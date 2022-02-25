@@ -155,6 +155,8 @@ class Maze(observable.Observable):
         for entity_ in self.entities.copy():
             entity_.update(delay)
 
+        self.changed(events.ForwardTimeEvent(delay))
+
         if self.extra_game_timer.update(delay):
             self.extra_game_timer.reset()
             self.extra_game_timer.start(float("inf"))  # Block extra game timer

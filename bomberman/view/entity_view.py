@@ -140,7 +140,7 @@ class BombView(EntityView):
         super().notify(event_)
 
         if isinstance(event_, events.ForwardTimeEvent):
-            bomb = cast(entity.Bomb, event_.entity)
+            bomb = cast(entity.Bomb, self.entity)
             if bomb.timer.current < bomb.FAST_TIMEOUT:
                 index = int((bomb.BASE_TIMEOUT - bomb.timer.current) / self.FAST_RATE)
                 self.select_sprite(0, 1 + (index % 2))
@@ -175,8 +175,7 @@ class TeleporterView(EntityView):
         super().notify(event_)
 
         if isinstance(event_, events.ForwardTimeEvent):
-            teleporter = cast(entity.Teleporter, event_.entity)
-            j = int(teleporter.alive_since.current / self.RATE) % self.COLUMNS
+            j = int(self.entity.alive_since.current / self.RATE) % self.COLUMNS
             self.select_sprite(0, j)
 
 

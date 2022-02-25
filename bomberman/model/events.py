@@ -54,6 +54,14 @@ class HurryUpEvent(Event):
     """30s before time's up"""
 
 
+class ForwardTimeEvent(Event):
+    """Notify the view of a progress in time"""
+
+    def __init__(self, delay: float) -> None:
+        super().__init__()
+        self.delay = delay
+
+
 class EntityEvent(Event):
     def __init__(self, entity_: entity.Entity):
         super().__init__()
@@ -61,10 +69,6 @@ class EntityEvent(Event):
 
 
 class NewEntityEvent(EntityEvent):
-    pass
-
-
-class ForwardTimeEvent(EntityEvent):
     pass
 
 

@@ -295,7 +295,7 @@ class Bomb(Entity):
             super().update(-self.timer.current)
             return
 
-        self.changed(events.ForwardTimeEvent(self))
+        self.changed(events.ForwardTimeEvent(delay))
 
     def removing(self) -> None:
         super().removing()
@@ -613,14 +613,14 @@ class Teleporter(Entity):
 
         if not self.reload_timer.is_active:
             self.alive_since.update(delay)
-            self.changed(events.ForwardTimeEvent(self))
+            self.changed(events.ForwardTimeEvent(delay))
             return
 
         if self.reload_timer.update(delay):
             delay = -self.reload_timer.current
             self.reload_timer.reset()
             self.alive_since.update(delay)
-            self.changed(events.ForwardTimeEvent(self))
+            self.changed(events.ForwardTimeEvent(delay))
 
     def teleport(self):
         self.maze.add_entity(Flash(self.maze, self.position))
@@ -1582,4 +1582,4 @@ class ExtraLetter(Entity):
             self.letter_id = (self.letter_id + 1) % 5
             self.letter_timer.start(self.LETTER_DELAY)
 
-        self.changed(events.ForwardTimeEvent(self))
+        self.changed(events.ForwardTimeEvent(delay))

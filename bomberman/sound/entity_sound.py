@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import os
 from typing import Dict, cast
 
 import pygame.mixer
 
 from ..designpattern import event, observer
 from ..model import entity, events
+from . import load_sound
 
 
 # TODO: Stop sound when removed ? (for bombs for example)
@@ -41,9 +41,8 @@ class EntitySound(observer.Observer):
 
         sounds = {}
         for sound in self.sounds:
-            path = os.path.join("data", "sound", f"{self.sound_name}{sound}.wav")
             try:
-                sounds[sound] = pygame.mixer.Sound(path)
+                sounds[sound] = load_sound(f"{self.sound_name}{sound}.wav")
             except FileNotFoundError:
                 pass
 

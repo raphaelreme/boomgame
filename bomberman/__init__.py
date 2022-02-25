@@ -1,13 +1,17 @@
 """Bomberman game using pygame."""
 
-from . import controller
-from . import designpattern
-from . import model
-from . import sound
-from . import view
+import pathlib
 
 
 __version__ = "0.3.0dev"
 
 
-__all__ = ["controller", "designpattern", "model", "sound", "view"]
+DATA_FOLDER = pathlib.Path(__file__).parent.parent / "data"
+
+
+def display_version() -> None:
+    """Entry point of boom_version command
+
+    Print the version on stdout
+    """
+    print(__version__)

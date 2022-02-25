@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import enum
-import os
 
 from pygame import locals as p_locals
+
+from .. import DATA_FOLDER
 
 
 class TypeControl(enum.IntEnum):
@@ -71,15 +72,13 @@ class PlayerControl:
         return control
 
     def save(self) -> None:
-        path = os.path.join("data", "control", f"player{self.identifier}.txt")
-        with open(path, "w") as file:
+        with open(DATA_FOLDER / "control" / f"player{self.identifier}.txt", "w") as file:
             file.write(self.serialize())
 
     @staticmethod
     def from_identifier(identifier: int) -> PlayerControl:
-        path = os.path.join("data", "control", f"player{identifier}.txt")
-        if not os.path.exists(path):
+        path = DATA_FOLDER / "control" / f"player{identifier}.txt"
+        if not path.exists():
             return PlayerControl(identifier)
 
-        with open(path, "r") as file:
-            return PlayerControl.unserialize(file.read(), identifier)
+        return PlayerControl.unserialize(path.read_text(), identifier)

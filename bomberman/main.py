@@ -15,6 +15,8 @@ from .view import view
 
 # TODO: Menu + Settings
 
+DEBUG = True
+
 
 class BoomGame:
     """BOOM Game"""
@@ -31,15 +33,20 @@ class BoomGame:
         while True:
             self.main_menu()
             self.game()
+            return
 
     def main_menu(self) -> None:
         """Main menu, not implemented yet"""
 
-        char = input("Menu not implemented yet. Two players (y|n) ? ")
-        self.two_players = char.lower().strip() == "y"
-        try:
-            self.maze_solved = int(input("Starting maze ? ")) - 1
-        except ValueError:
+        if DEBUG:
+            char = input("Menu not implemented yet. Two players (y|n) ? ")
+            self.two_players = char.lower().strip() == "y"
+            try:
+                self.maze_solved = int(input("Starting maze ? ")) - 1
+            except ValueError:
+                self.maze_solved = 0
+        else:
+            self.two_players = True
             self.maze_solved = 0
         self.game_name = "boom"
 
@@ -76,7 +83,7 @@ class BoomGame:
 
 
 def main() -> None:
-    assert pygame.init()[1] == 0
+    assert pygame.init()[1] == 0, "Unable to initialize pygame"
     pygame.display.set_mode((0, 0), pygame.HIDDEN)
     BoomGame().main()  # Entry point of the game
     pygame.quit()

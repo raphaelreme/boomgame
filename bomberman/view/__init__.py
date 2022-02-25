@@ -23,11 +23,3 @@ def inflate_to_reality(base: Tuple[float, float], ratio: float = 1) -> Tuple[int
         x (int), y (int): Inflated tuple in the real world. (In pixels)
     """
     return (int(base[1] * TILE_SIZE[0] * ratio), int(base[0] * TILE_SIZE[1] * ratio))
-
-
-__all__ = ["entity_view", "maze_view", "view"]
-
-# pylint: disable = wrong-import-position
-# from . import entity_view
-# from . import maze_view
-# from . import view

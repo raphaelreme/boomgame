@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import Tuple
 
 import pygame
@@ -13,6 +12,7 @@ import pygame.rect
 import pygame.surface
 import pygame.transform
 
+from .. import DATA_FOLDER
 from . import TILE_SIZE
 
 
@@ -28,7 +28,7 @@ def load_image(file_name: str, size: Tuple[int, int] = None) -> pygame.surface.S
     Return:
         pygame.surface.Surface: The image loaded.
     """
-    real_location = os.path.join("data", "image", file_name)
+    real_location = str(DATA_FOLDER / "image" / file_name)
 
     if size:
         return pygame.transform.scale(pygame.image.load(real_location).convert_alpha(), size)
@@ -45,7 +45,7 @@ def load_font(file_name: str, size: int) -> pygame.font.Font:
     Return:
         pygame.font.Font: The font loaded.
     """
-    real_location = os.path.join("data", "font", file_name)
+    real_location = str(DATA_FOLDER / "font" / file_name)
 
     return pygame.font.Font(real_location, size)
 

@@ -641,7 +641,6 @@ class Flash(Entity):
 
 
 # TODO: Handle success image and sound
-# FIXME: When killed at the end of a maze. Restart without going through remove and new life
 class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
     """Player entity.
 
@@ -713,9 +712,6 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         self.prev_position = self.position
         self.step = 0.0
         self.try_moving_since = 0.0
-
-        # Entity related
-        self.removing_timer.reset()
 
     def new_life(self) -> None:
         """Reset some stuff when a player loses a life"""

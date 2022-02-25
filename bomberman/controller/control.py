@@ -31,7 +31,7 @@ class PlayerControl:
     from data/control/player{id}.txt
     """
 
-    # FIXME: A default for each player ?
+    # XXX: A default for each player ?
     DEFAULT_UP = p_locals.K_UP  # type: ignore
     DEFAULT_DOWN = p_locals.K_DOWN  # type: ignore
     DEFAULT_RIGHT = p_locals.K_RIGHT  # type: ignore

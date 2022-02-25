@@ -821,7 +821,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
 # XXX: Ugly
 Player.BOUNCE_ON = (Player,)
 
-# FIXME: Build a AI system for enemies rather than this ?
+# XXX: Build a AI system for enemies rather than this ?
 
 
 class Enemy(MovingEntity):

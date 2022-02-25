@@ -266,7 +266,7 @@ class PlayerView(MovingEntityView):
                 return
 
         # Display shield
-        # TODO: Could use the player as a mask for the shield ?
+        # XXX: Could use the player as a mask for the shield ?
         image = pygame.surface.Surface(self.SPRITE_SIZE).convert_alpha()
         image.fill((0, 0, 0, 0))
         image.blit(self.sprite_image, (0, 0), self.current_sprite)

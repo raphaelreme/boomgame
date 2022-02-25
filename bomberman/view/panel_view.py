@@ -16,7 +16,7 @@ from . import TILE_SIZE, inflate_to_reality
 from . import view
 
 
-# FIXME: Some very ugly stuff with ratio size and position...
+# XXX: Some very ugly stuff with ratio size and position...
 
 
 def display_with_shadow(
@@ -28,7 +28,7 @@ def display_with_shadow(
         surface (pygame.surface.Surface): Surface to draw on
         image (pygame.surface.Surface): Image to draw
         position (Tuple[int, int]): Position of the drawing.
-            The shadow is displayed 3 pixels right and di.
+            The shadow is displayed 3 pixels right and down.
     """
     # Build the shadow image
     shadow = image.copy()

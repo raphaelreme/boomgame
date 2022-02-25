@@ -36,7 +36,6 @@ class GameModel(observable.Observable):
         RUNNING = 2
         BONUS_SCREEN = 3
 
-    # XXX: Should maze of different sizes be allowed (Hard because the window cannot change its size easily)
     DEFAULT_MAZE_SIZE = (16, 17)
     START_SCREEN_DELAY = 2.0
     END_SCREEN_DELAY = 2.0

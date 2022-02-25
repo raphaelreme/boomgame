@@ -41,7 +41,7 @@ class EntitySound(observer.Observer):
 
         sounds = {}
         for sound in self.sounds:
-            path = os.path.join(os.path.dirname(__file__), "..", "data", "sound", f"{self.sound_name}{sound}.wav")
+            path = os.path.join("data", "sound", f"{self.sound_name}{sound}.wav")
             try:
                 sounds[sound] = pygame.mixer.Sound(path)
             except FileNotFoundError:

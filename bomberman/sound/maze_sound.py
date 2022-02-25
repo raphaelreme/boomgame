@@ -31,21 +31,11 @@ class MazeSound(observer.Observer):
         self.maze = maze_
         self.maze.add_observer(self)
         self.running = False
-        self.failed_sound = pygame.mixer.Sound(
-            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.failed)
-        )
-        self.solved_sound = pygame.mixer.Sound(
-            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.solved)
-        )
-        self.extra_game_sound = pygame.mixer.Sound(
-            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.extra_game)
-        )
-        self.hurry_up_sound = pygame.mixer.Sound(
-            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.hurry_up)
-        )
-        self.extra_life_sound = pygame.mixer.Sound(
-            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.extra_life)
-        )
+        self.failed_sound = pygame.mixer.Sound(os.path.join("data", "sound", self.failed))
+        self.solved_sound = pygame.mixer.Sound(os.path.join("data", "sound", self.solved))
+        self.extra_game_sound = pygame.mixer.Sound(os.path.join("data", "sound", self.extra_game))
+        self.hurry_up_sound = pygame.mixer.Sound(os.path.join("data", "sound", self.hurry_up))
+        self.extra_life_sound = pygame.mixer.Sound(os.path.join("data", "sound", self.extra_life))
 
         # Set of all the views for each component of the maze
         self.entity_sounds = {entity_sound.EntitySound.from_entity(entity_) for entity_ in self.maze.entities}

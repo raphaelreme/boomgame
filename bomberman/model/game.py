@@ -42,7 +42,7 @@ class GameModel(observable.Observable):
 
     def __init__(self, game_name: str, two_players: bool = False) -> None:
         super().__init__()
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "game", f"{game_name}.json")
+        path = os.path.join("data", "game", f"{game_name}.json")
         with open(path, "r") as file:
             self.levels: List[Dict[str, int]] = json.load(file)
 
@@ -78,7 +78,7 @@ class GameModel(observable.Observable):
         self.time = level["time"]
         maze_id = level["maze_id"]
 
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "maze", f"{maze_id}.txt")
+        path = os.path.join("data", "maze", f"{maze_id}.txt")
         self.maze = maze.Maze.read(path)
         # assert self.maze.size == self.MAZE_SIZE, f"This game only supports maze with a size {self.MAZE_SIZE}"
 

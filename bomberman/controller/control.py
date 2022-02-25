@@ -71,13 +71,13 @@ class PlayerControl:
         return control
 
     def save(self) -> None:
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "control", f"player{self.identifier}.txt")
+        path = os.path.join("data", "control", f"player{self.identifier}.txt")
         with open(path, "w") as file:
             file.write(self.serialize())
 
     @staticmethod
     def from_identifier(identifier: int) -> PlayerControl:
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "control", f"player{identifier}.txt")
+        path = os.path.join("data", "control", f"player{identifier}.txt")
         if not os.path.exists(path):
             return PlayerControl(identifier)
 

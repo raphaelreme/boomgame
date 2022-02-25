@@ -509,7 +509,7 @@ class MovingEntity(Entity):
 
         self.changed(events.MovedEntityEvent(self))
 
-    def teleport(self) -> None:
+    def teleport(self) -> bool:
         """Try to teleport the entity"""
         assert self.position.int_part() == self.position
 
@@ -523,7 +523,7 @@ class MovingEntity(Entity):
             next_teleporter = teleporter.next_teleporter
 
             if next_teleporter is None:
-                return
+                return False
 
             self.position = next_teleporter.position
             self.prev_position = self.position
@@ -531,7 +531,9 @@ class MovingEntity(Entity):
 
             teleporter.teleport()
             next_teleporter.teleport()
-            return
+            return True
+
+        return False
 
     def _switch_direction(self) -> None:
         if self.current_direction:
@@ -1076,7 +1078,6 @@ class Thing(Enemy):
 
 
 class Ghost(Enemy):
-    # FIXME: Reset sprint when teleport
     REPR = "6"
     CHASE = True
     DAMAGE = 2
@@ -1113,6 +1114,13 @@ class Ghost(Enemy):
             self.speed = self.BASE_SPEED
 
         super()._update_direction()
+
+    def teleport(self) -> bool:
+        if super().teleport():
+            self.firing_timer.reset()
+            self.speed = self.BASE_SPEED
+            return True
+        return False
 
 
 class Smoulder(Enemy):

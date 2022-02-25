@@ -9,6 +9,7 @@ import pygame.surface
 
 from ..designpattern import event
 from ..designpattern import observer
+from ..model import entity
 from ..model import events
 from ..model import maze
 from . import TILE_SIZE, inflate_to_reality
@@ -120,6 +121,10 @@ class MazeView(view.View, observer.Observer):
             self.sliders_views.append(HurryUpSlider(self.size))
             return
 
+        if isinstance(event_, events.ScoreEvent):
+            image_name = f"score_{event_.entity.SCORE.value}.png"
+            self.sliders_views.append(AnchoredSliderView(image_name, event_.entity))
+
 
 class SliderView(view.ImageView):
     """Specific view that display an image by sliding it from top to bottom
@@ -170,3 +175,38 @@ class HurryUpSlider(SliderView):
 
 class ExtraGameSlider(SliderView):
     FILE_NAME = "extra_game.png"
+
+
+# TODO: Let's observe the maze. And be notify of forward time rather than this
+class AnchoredSliderView(view.ImageView):
+    """Specific view that slides up over an entity
+
+    Used for scores and some other stuff
+    """
+
+    SLIDE_DELAY = 1.0
+    SLIDE_DISTANCE = 2.0  # In tiles
+
+    def __init__(self, image_name: str, anchor: entity.Entity) -> None:
+        super().__init__(view.load_image(image_name), (0, 0))
+        self.start_time = time.time()
+
+        position = inflate_to_reality(anchor.position + (1, 1))
+        size = inflate_to_reality(anchor.size)
+
+        self.x_position = int(position[0] + size[0] / 2 - self.size[0] / 2)
+        self.y_position_init = int(position[1] + size[1] / 2 - self.size[1] / 2)
+        self.y_position_final = self.y_position_init - int(self.SLIDE_DISTANCE * TILE_SIZE[1])
+
+        self.position = (self.x_position, self.y_position_init)
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        delay = time.time() - self.start_time
+
+        if delay > self.SLIDE_DELAY:
+            return
+
+        t = delay / self.SLIDE_DELAY
+        self.position = (self.x_position, int(self.y_position_init * (1 - t) + self.y_position_final * t))
+
+        super().display(surface)

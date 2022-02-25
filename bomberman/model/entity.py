@@ -14,6 +14,27 @@ from . import timer
 from . import vector
 
 
+class Score(enum.IntEnum):
+    """All available scores"""
+
+    s0 = 0
+    s10 = 10
+    s50 = 50
+    s100 = 100
+    s150 = 150
+    s200 = 200
+    s300 = 300
+    s400 = 400
+    s500 = 500
+    s600 = 600
+    s700 = 700
+    s800 = 800
+    s900 = 900
+    s1k = 1000
+    s5k = 5000
+    s100k = 100000
+
+
 class Damage:
     """Damage done to entities
 
@@ -68,6 +89,8 @@ class Entity(observable.Observable, metaclass=EntityClass):
             Default to [] (Cannot take damage and is therefore invulnerable)
         REMOVING_DELAY (float): Time in removing state
             Default to 0 (Immediately removed.)
+        SCORE (Score): Reward score when entity is destroyed/taken by the player
+        SCORE_ON_REMOVE (Bool): Create the reward on remove rather than on removing
     """
 
     REPR: str = ""
@@ -75,6 +98,8 @@ class Entity(observable.Observable, metaclass=EntityClass):
     SIZE = (1.0, 1.0)
     VULNERABILITIES: List[Damage.Type] = []
     REMOVING_DELAY: float = 0
+    SCORE = Score.s0
+    SCORE_ON_REMOVE = False
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         """Initialise an entity in the maze.
@@ -91,6 +116,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self._size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
         self.colliding_rect = self._build_colliding_rect(self.position, self.size)
+        self.score_collectors: Set[Player] = set()
 
     @property
     def position(self) -> vector.Vector:
@@ -142,6 +168,9 @@ class Entity(observable.Observable, metaclass=EntityClass):
         if damage.type not in self.VULNERABILITIES:
             return False
 
+        if isinstance(damage.entity, Laser):
+            self.score_collectors.add(damage.entity.player)
+
         self.health = max(0, self.health - damage.damage)
         self.changed(events.HitEntityEvent(self))
 
@@ -150,12 +179,28 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
         return True
 
+    def generate_score(self) -> None:
+        if not self.SCORE or not self.score_collectors:
+            return
+
+        for player in self.score_collectors:
+            player.add_score(self.SCORE)
+
+        # Note: Sent to the maze view, not the entity view
+        self.maze.changed(events.ScoreEvent(self))
+
     def removing(self) -> None:
         self.removing_timer.start(self.REMOVING_DELAY)
         self.changed(events.StartRemovingEvent(self))
 
+        if not self.SCORE_ON_REMOVE:
+            self.generate_score()
+
     def remove(self) -> None:
         self.maze.remove_entity(self)
+
+        if self.SCORE_ON_REMOVE:
+            self.generate_score()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__} at {self.colliding_rect}"
@@ -164,12 +209,15 @@ class Entity(observable.Observable, metaclass=EntityClass):
 class Coin(Entity):
     REPR = "C"
     REMOVING_DELAY = 1.5
+    SCORE = Score.s150
 
     def update(self, delay: float) -> None:
         super().update(delay)
 
         if not self.removing_timer.is_active:
-            if self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player)):
+            players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
+            if players:
+                self.score_collectors = cast(Set[Player], players)
                 self.removing()
 
 
@@ -177,6 +225,7 @@ class BreakableWall(Entity):
     REPR = "B"
     VULNERABILITIES = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.5
+    SCORE = Score.s10
 
     def remove(self) -> None:
         rand = random.random()
@@ -217,6 +266,7 @@ class BreakableWallRemover(Entity):
                 self.remove()
                 return
 
+        self.sorted_walls[self.removed].score_collectors = self.score_collectors
         self.sorted_walls[self.removed].removing()
 
 
@@ -265,12 +315,15 @@ class Laser(Entity):
     USE_STRENGTH = False  # By default lasers are all the same strength
 
     def __init__(
-        self, maze_: maze.Maze, position: vector.Vector, strength: float, orientation: Laser.Orientation
+        self, player: Player, position: vector.Vector, strength: float, orientation: Laser.Orientation
     ) -> None:
-        super().__init__(maze_, position)
+        super().__init__(player.maze, position)
+        self.player = player
         self.orientation = orientation
+
         if not self.USE_STRENGTH:
             strength = 1.0
+
         self.damage = int(self.DAMAGE * strength)
         self.removing()
 
@@ -301,7 +354,7 @@ class Laser(Entity):
             bomb (Bomb): Exploding bomb.
         """
         maze_ = bomb.maze
-        maze_.add_entity(Laser(maze_, bomb.position, 1, Laser.Orientation.CENTER))
+        maze_.add_entity(Laser(bomb.player, bomb.position, 1, Laser.Orientation.CENTER))
 
         for direction in [vector.Direction.UP, vector.Direction.DOWN, vector.Direction.RIGHT, vector.Direction.LEFT]:
             position = bomb.position
@@ -325,10 +378,10 @@ class Laser(Entity):
                 if maze_.get_collision(laser_rect, lambda entity: isinstance(entity, BreakableWall)):
                     # Lasers can go through breakable wall only if the bomb is close to it
                     if dist == 1:
-                        maze_.add_entity(Laser(maze_, position, strength, orientation))
+                        maze_.add_entity(Laser(bomb.player, position, strength, orientation))
                     break  # Laser will never go beyond though
 
-                maze_.add_entity(Laser(maze_, position, strength, orientation))
+                maze_.add_entity(Laser(bomb.player, position, strength, orientation))
 
 
 class MovingEntity(Entity):
@@ -730,6 +783,10 @@ class Player(MovingEntity):
             # TODO: Create New life animation (Like score)
         self.changed(events.PlayerDetailsEvent(self))
 
+    def add_score(self, score: Score) -> None:
+        self.score += score
+        self.changed(events.PlayerDetailsEvent(self))
+
     def hit(self, damage: Damage) -> bool:
         if self.shield.is_active:
             return False
@@ -946,18 +1003,21 @@ Enemy.BOUNCE_ON = (Enemy,)
 class Soldier(Enemy):
     REPR = "0"
     ERRATIC = True
+    SCORE = Score.s200
 
 
 class Sarge(Enemy):
     REPR = "1"
     ERRATIC = True
     RELOADING_DELAY = 0.75
+    SCORE = Score.s300
 
 
 class Lizzy(Enemy):
     REPR = "2"
     FIRING_DELAY = 0.2
     RELOADING_DELAY = 1.0
+    SCORE = Score.s400
 
 
 class Taur(Enemy):
@@ -969,6 +1029,7 @@ class Taur(Enemy):
     RELOADING_DELAY = 0.40
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
+    SCORE = Score.s500
 
     def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
         distance = super()._check_player_on(direction)
@@ -1001,6 +1062,7 @@ class Taur(Enemy):
 class Gunner(Enemy):
     REPR = "4"
     RELOADING_DELAY = 0.125
+    SCORE = Score.s600
 
 
 class Thing(Enemy):
@@ -1008,6 +1070,7 @@ class Thing(Enemy):
     CHASE = True
     DAMAGE = 2
     FIRING_DELAY = 0.25
+    SCORE = Score.s700
 
 
 class Ghost(Enemy):
@@ -1020,6 +1083,7 @@ class Ghost(Enemy):
     RELOADING_DELAY = 1.5
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
+    SCORE = Score.s800
 
     def attack(self, distance: float) -> None:
         assert self.current_direction
@@ -1056,6 +1120,7 @@ class Smoulder(Enemy):
     DAMAGE = 2
     FIRING_DELAY = 0.5
     RELOADING_DELAY = 0.2
+    SCORE = Score.s900
 
     def attack(self, distance: float) -> None:
         if distance <= Flame.RANGE:
@@ -1067,6 +1132,7 @@ class Skully(Enemy):
     CHASE = True
     DAMAGE = 2
     RELOADING_DELAY = 0.15
+    SCORE = Score.s1k
 
 
 class Giggler(Enemy):
@@ -1076,6 +1142,7 @@ class Giggler(Enemy):
     DAMAGE = 4
     FIRING_DELAY = 0.5
     RELOADING_DELAY = 1.2
+    SCORE = Score.s1k
 
 
 class Head(Enemy):
@@ -1096,6 +1163,8 @@ class Head(Enemy):
     SCOPE = 9
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
+    SCORE = Score.s5k
+    SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
@@ -1339,6 +1408,8 @@ class Bonus(Entity, metaclass=BonusClass):
     RATE = 0.0
     DELAY = 7.0
     REMOVING_DELAY = 3.0
+    SCORE = Score.s50
+    SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
@@ -1348,6 +1419,7 @@ class Bonus(Entity, metaclass=BonusClass):
     def catch(self, player: Player) -> None:
         """Called when a player catches a bonus"""
         self.changed(events.NoiseEvent(self))
+        self.score_collectors.add(player)
         self.remove()
 
     def update(self, delay: float) -> None:
@@ -1369,7 +1441,9 @@ class LightboltBonus(Bonus):
 
     def catch(self, player: Player) -> None:
         super().catch(player)
-        self.maze.add_entity(BreakableWallRemover(self.maze, self.position))
+        remover = BreakableWallRemover(self.maze, self.position)
+        remover.score_collectors.add(player)
+        self.maze.add_entity(remover)
 
 
 class SkullBonus(Bonus):
@@ -1382,6 +1456,7 @@ class SkullBonus(Bonus):
         for entity in self.maze.entities:
             if isinstance(entity, Enemy):
                 if not entity.removing_timer.is_active:
+                    entity.score_collectors.add(player)
                     entity.removing()
 
 
@@ -1478,6 +1553,8 @@ class ExtraLetter(Entity):
     """Extra Letter dropped by aliens"""
 
     LETTER_DELAY = 2.0
+    SCORE = Score.s100
+    SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
@@ -1488,6 +1565,7 @@ class ExtraLetter(Entity):
     def catch(self, player: Player) -> None:
         self.changed(events.NoiseEvent(self))
         player.add_letter(self.letter_id)
+        self.score_collectors.add(player)
         self.remove()
 
     def update(self, delay: float) -> None:

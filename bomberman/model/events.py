@@ -98,3 +98,10 @@ class NoiseEvent(EntityEvent):
 
 class StartRemovingEvent(EntityEvent):
     """when the entity reaches removing state"""
+
+
+class ScoreEvent(EntityEvent):
+    """When score is earned
+
+    Will trigger a score slider
+    """

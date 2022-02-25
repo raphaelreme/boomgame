@@ -28,6 +28,6 @@ def inflate_to_reality(base: Tuple[float, float], ratio: float = 1) -> Tuple[int
 __all__ = ["entity_view", "maze_view", "view"]
 
 # pylint: disable = wrong-import-position
-from . import entity_view
-from . import maze_view
-from . import view
+# from . import entity_view
+# from . import maze_view
+# from . import view

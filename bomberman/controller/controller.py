@@ -9,14 +9,13 @@ from typing import List
 
 import pygame.event
 
-from ..designpattern import observer
 from ..model import entity
 from ..model import game
 from ..model import vector
 from . import control
 
 
-class GameController(observer.Observer):
+class GameController:
     """Main controller during the game.
 
     Handle pygame events (from the user) and main intern events (like maze change)
@@ -25,7 +24,6 @@ class GameController(observer.Observer):
     def __init__(self, model: game.GameModel) -> None:
         self.model = model
         self.player_controllers = [PlayerController(model.players[identifier]) for identifier in model.players]
-        self.maze_controller = MazeController(self.model.maze)
 
     def handle_user_event(self, event: pygame.event.Event) -> bool:
         """Handle all the graphical events.
@@ -56,20 +54,8 @@ class GameController(observer.Observer):
         """
         self.model.update(delta_time)
 
-        self.maze_controller.tick(delta_time)
-
         for controller in self.player_controllers:
             controller.tick(delta_time)
-
-
-class MazeController(observer.Observer):
-    """Does nothing for now"""
-
-    def __init__(self, maze) -> None:
-        super().__init__()
-
-    def tick(self, delta_time: float) -> None:
-        pass
 
 
 class PlayerController:
@@ -122,7 +108,7 @@ class PlayerController:
 
         return True
 
-    def tick(self, delta_time: float) -> None:
+    def tick(self, _delta_time: float) -> None:
         if self.bombing:
             self.player.bombs()  # Try to bomb at each time step when bombing
         # Note that entity update is done by game controller, no need to redo it.

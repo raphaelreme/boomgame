@@ -73,7 +73,6 @@ class EntityView(view.Sprite, observer.Observer):
 
         Only used for walls for now.
         """
-        pass
 
 
 class FakeEntityView(EntityView):
@@ -259,11 +258,13 @@ class PlayerView(MovingEntityView):
 
     def display(self, surface: pygame.surface.Surface) -> None:
         if not self.entity.shield.is_active:
-            return super().display(surface)
+            super().display(surface)
+            return
 
         if self.entity.shield.current < self.SHIELD_TWINKLE_DELAY:
             if int(self.entity.shield.current / self.SHIELD_RATE) % 2:
-                return super().display(surface)
+                super().display(surface)
+                return
 
         # Display shield
         # TODO: Could use the player as a mask for the shield ?
@@ -297,7 +298,7 @@ class EnemyView(MovingEntityView):
     FIRING_ROW = 4
 
     def __init__(self, entity_: entity.Enemy) -> None:
-        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
+        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"  # pylint: disable=invalid-name
         super().__init__(entity_)
         self.entity: entity.Enemy
         self.alien_view = AlienView(self.entity)
@@ -369,7 +370,7 @@ class HeadView(EnemyView):
             if int(self.entity.removing_timer.current / self.REMOVING_RATE) % 2:
                 return
 
-        return super().display(surface)
+        super().display(surface)
 
 
 class BulletView(EntityView):
@@ -389,7 +390,7 @@ class BulletView(EntityView):
     }
 
     def __init__(self, entity_: entity.Bullet) -> None:
-        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"
+        self.FILE_NAME = f"{entity_.__class__.__name__.lower()}.png"  # pylint: disable=invalid-name
         super().__init__(entity_)
         self.entity: entity.Bullet
         self.rotation = self.direction_to_rotation[entity_.display_direction]
@@ -509,7 +510,7 @@ class BonusView(EntityView):
             if int(self.entity.removing_timer.current / self.REMOVING_RATE) % 2:
                 return
 
-        return super().display(surface)
+        super().display(surface)
 
 
 class LightboltBonusView(BonusView):

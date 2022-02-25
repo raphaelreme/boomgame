@@ -145,7 +145,7 @@ class Maze(observable.Observable):
             self.hurry_up_timer.start(self.HURRY_UP_DELAY)
             self.changed(events.HurryUpEvent())
 
-    def update(self, delay: float) -> None:
+    def update(self, delay: float) -> None:  # pylint: disable=too-many-branches
         """Handle time forwarding.
 
         Args:
@@ -235,7 +235,7 @@ class Maze(observable.Observable):
         return str(self)
 
     @staticmethod
-    def unserialize(string: str) -> Maze:
+    def unserialize(string: str) -> Maze:  # pylint: disable=too-many-locals
         lines = string.split("\n")
         matrix = list(map(lambda line: line.split(Maze.SEP), lines))
 
@@ -273,8 +273,8 @@ class Maze(observable.Observable):
                 if isinstance(entity_, entity.Teleporter):
                     teleporters.append(entity_)
 
-        for i in range(len(teleporters)):
-            teleporters[i].next_teleporter = teleporters[(i + 1) % len(teleporters)]
+        for i, teleporter in enumerate(teleporters):
+            teleporter.next_teleporter = teleporters[(i + 1) % len(teleporters)]
 
         if not has_coin:
             maze.extra_game_timer.start(float("inf"))  # Prevent Extra Game

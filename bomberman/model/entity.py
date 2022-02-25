@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 """Provides classes for all entities of the game"""
 
 from __future__ import annotations
@@ -17,22 +19,22 @@ from . import vector
 class Score(enum.IntEnum):
     """All available scores"""
 
-    s0 = 0
-    s10 = 10
-    s50 = 50
-    s100 = 100
-    s150 = 150
-    s200 = 200
-    s300 = 300
-    s400 = 400
-    s500 = 500
-    s600 = 600
-    s700 = 700
-    s800 = 800
-    s900 = 900
-    s1k = 1000
-    s5k = 5000
-    s100k = 100000
+    S0 = 0
+    S10 = 10
+    S50 = 50
+    S100 = 100
+    S150 = 150
+    S200 = 200
+    S300 = 300
+    S400 = 400
+    S500 = 500
+    S600 = 600
+    S700 = 700
+    S800 = 800
+    S900 = 900
+    S1K = 1000
+    S5K = 5000
+    S100K = 100000
 
 
 class Damage:
@@ -98,7 +100,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
     SIZE = (1.0, 1.0)
     VULNERABILITIES: List[Damage.Type] = []
     REMOVING_DELAY: float = 0
-    SCORE = Score.s0
+    SCORE = Score.S0
     SCORE_ON_REMOVE = False
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -115,7 +117,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self.health = self.BASE_HEALTH
         self._size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
-        self.colliding_rect = self._build_colliding_rect(self.position, self.size)
+        self.colliding_rect: vector.Rect = self._build_colliding_rect(self.position, self.size)
         self.score_collectors: Set[Player] = set()
 
     @property
@@ -209,7 +211,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
 class Coin(Entity):
     REPR = "C"
     REMOVING_DELAY = 1.5
-    SCORE = Score.s150
+    SCORE = Score.S150
 
     def update(self, delay: float) -> None:
         super().update(delay)
@@ -225,7 +227,7 @@ class BreakableWall(Entity):
     REPR = "B"
     VULNERABILITIES = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.5
-    SCORE = Score.s10
+    SCORE = Score.S10
 
     def remove(self) -> None:
         rand = random.random()
@@ -363,7 +365,7 @@ class Laser(Entity):
             else:
                 orientation = Laser.Orientation.HORIZONTAL
             for dist in range(1, bomb.radius + 1):
-                position += direction.vector  # Int position
+                position += direction.vector  # Int position  # pylint: disable=no-member
                 laser_rect = vector.Rect(position, bomb.size)
 
                 if not maze_.is_inside(laser_rect) or maze_.get_collision(
@@ -440,7 +442,7 @@ class MovingEntity(Entity):
         if not self.removing_timer.is_active:
             self.move(delay)
 
-    def move(self, delay: float) -> None:
+    def move(self, delay: float) -> None:  # pylint: disable=too-many-branches
         """Update the position after a small delay
 
         Args:
@@ -638,7 +640,7 @@ class Flash(Entity):
 
 # TODO: Handle success image and sound
 # FIXME: When killed at the end of a maze. Restart without going through remove and new life
-class Player(MovingEntity):
+class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
     """Player entity.
 
     Special entity, it is controlled by the player, it has several lifes,
@@ -967,19 +969,19 @@ class Enemy(MovingEntity):
 
         return distance
 
-    def attack(self, distance: float) -> None:
+    def attack(self, _distance: float) -> None:
         """Attack a player at a given distance
 
         Default behavior: Shot a bullet in the current direction
 
         Args:
-            distance (float): Distance of the player (Used with Taur and Smouldier)
+            _distance (float): Distance of the player (Used with Taur and Smouldier)
         """
         if not self.BULLET_CLASS:
             return
 
         direction = self.current_direction if self.current_direction else vector.Direction.DOWN
-        self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))
+        self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))  # pylint: disable=no-member,not-callable
         self.firing_timer.reset()
         self.firing_timer.start(self.FIRING_DELAY)
         self.reload_timer.start(self.RELOADING_DELAY)
@@ -1003,21 +1005,21 @@ Enemy.BOUNCE_ON = (Enemy,)
 class Soldier(Enemy):
     REPR = "0"
     ERRATIC = True
-    SCORE = Score.s200
+    SCORE = Score.S200
 
 
 class Sarge(Enemy):
     REPR = "1"
     ERRATIC = True
     RELOADING_DELAY = 0.75
-    SCORE = Score.s300
+    SCORE = Score.S300
 
 
 class Lizzy(Enemy):
     REPR = "2"
     FIRING_DELAY = 0.2
     RELOADING_DELAY = 1.0
-    SCORE = Score.s400
+    SCORE = Score.S400
 
 
 class Taur(Enemy):
@@ -1029,7 +1031,7 @@ class Taur(Enemy):
     RELOADING_DELAY = 0.40
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
-    SCORE = Score.s500
+    SCORE = Score.S500
 
     def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
         distance = super()._check_player_on(direction)
@@ -1062,7 +1064,7 @@ class Taur(Enemy):
 class Gunner(Enemy):
     REPR = "4"
     RELOADING_DELAY = 0.125
-    SCORE = Score.s600
+    SCORE = Score.S600
 
 
 class Thing(Enemy):
@@ -1070,7 +1072,7 @@ class Thing(Enemy):
     CHASE = True
     DAMAGE = 2
     FIRING_DELAY = 0.25
-    SCORE = Score.s700
+    SCORE = Score.S700
 
 
 class Ghost(Enemy):
@@ -1083,9 +1085,9 @@ class Ghost(Enemy):
     RELOADING_DELAY = 1.5
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
-    SCORE = Score.s800
+    SCORE = Score.S800
 
-    def attack(self, distance: float) -> None:
+    def attack(self, _distance: float) -> None:
         assert self.current_direction
 
         self.firing_timer.reset()
@@ -1107,9 +1109,8 @@ class Ghost(Enemy):
         if self.firing_timer.is_active and self.current_direction:
             if self._valid_next_direction(self.current_direction):
                 return
-            else:
-                self.firing_timer.reset()
-                self.speed = self.BASE_SPEED
+            self.firing_timer.reset()
+            self.speed = self.BASE_SPEED
 
         super()._update_direction()
 
@@ -1120,7 +1121,7 @@ class Smoulder(Enemy):
     DAMAGE = 2
     FIRING_DELAY = 0.5
     RELOADING_DELAY = 0.2
-    SCORE = Score.s900
+    SCORE = Score.S900
 
     def attack(self, distance: float) -> None:
         if distance <= Flame.RANGE:
@@ -1132,7 +1133,7 @@ class Skully(Enemy):
     CHASE = True
     DAMAGE = 2
     RELOADING_DELAY = 0.15
-    SCORE = Score.s1k
+    SCORE = Score.S1K
 
 
 class Giggler(Enemy):
@@ -1142,7 +1143,7 @@ class Giggler(Enemy):
     DAMAGE = 4
     FIRING_DELAY = 0.5
     RELOADING_DELAY = 1.2
-    SCORE = Score.s1k
+    SCORE = Score.S1K
 
 
 class Head(Enemy):
@@ -1163,7 +1164,7 @@ class Head(Enemy):
     SCOPE = 9
     MIN_YELL_DELAY = 999999  # No random yell
     MAX_YELL_DELAY = 999999
-    SCORE = Score.s5k
+    SCORE = Score.S5K
     SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -1408,7 +1409,7 @@ class Bonus(Entity, metaclass=BonusClass):
     RATE = 0.0
     DELAY = 7.0
     REMOVING_DELAY = 3.0
-    SCORE = Score.s50
+    SCORE = Score.S50
     SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
@@ -1553,7 +1554,7 @@ class ExtraLetter(Entity):
     """Extra Letter dropped by aliens"""
 
     LETTER_DELAY = 2.0
-    SCORE = Score.s100
+    SCORE = Score.S100
     SCORE_ON_REMOVE = True
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:

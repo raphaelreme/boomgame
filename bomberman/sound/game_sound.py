@@ -2,7 +2,7 @@
 
 import os
 
-from pygame.mixer import music
+import pygame.mixer
 
 from ..designpattern import event, observer
 from ..model import events, game
@@ -17,15 +17,15 @@ class GameSound(observer.Observer):
         self.model = model
         self.model.add_observer(self)
         self.maze_sound = maze_sound.MazeSound(self.model.maze)
-        # music.set_volume(1.0)
+        # pygame.mixer.music.set_volume(1.0)
 
     def notify(self, event_: event.Event) -> None:
         if isinstance(event_, events.MazeStartEvent):
             self.maze_sound = maze_sound.MazeSound(self.model.maze)
 
         if isinstance(event_, events.StartScreenEvent):
-            music.unload()
-            music.load(
+            pygame.mixer.music.unload()
+            pygame.mixer.music.load(
                 os.path.join(os.path.dirname(__file__), "..", "data", "music", f"music{self.model.style + 1}.ogg")
             )
 

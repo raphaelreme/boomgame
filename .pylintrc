@@ -3,14 +3,31 @@
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
+extension-pkg-allow-list=pygame
+
+# A comma-separated list of package or module names from where C extensions may
+# be loaded. Extensions are loading into the active Python interpreter and may
+# run arbitrary code. (This is an alternative name to extension-pkg-allow-list
+# for backward compatibility.)
 extension-pkg-whitelist=
 
-# Add files or directories to the blacklist. They should be base names, not
-# paths.
+# Return non-zero exit code if any of these messages/categories are detected,
+# even if score is above --fail-under value. Syntax same as enable. Messages
+# specified are enabled, while categories only check already-enabled messages.
+fail-on=
+
+# Specify a score threshold to be exceeded before program exits with error.
+fail-under=10.0
+
+# Files or directories to be skipped. They should be base names, not paths.
 ignore=CVS
 
-# Add files or directories matching the regex patterns to the blacklist. The
-# regex matches against base names, not paths.
+# Add files or directories matching the regex patterns to the ignore-list. The
+# regex matches against paths.
+ignore-paths=
+
+# Files or directories matching the regex patterns are skipped. The regex
+# matches against base names, not paths.
 ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
@@ -33,8 +50,9 @@ load-plugins=
 # Pickle collected data for later comparisons.
 persistent=yes
 
-# Specify a configuration file.
-#rcfile=
+# Min Python version to use for version dependend checks. Will default to the
+# version used to run pylint.
+py-version=3.9
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages.
@@ -60,17 +78,7 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=print-statement,
-        parameter-unpacking,
-        unpacking-in-except,
-        old-raise-syntax,
-        backtick,
-        long-suffix,
-        old-ne-operator,
-        old-octal-literal,
-        import-star-module-level,
-        non-ascii-bytes-literal,
-        raw-checker-failed,
+disable=raw-checker-failed,
         bad-inline-option,
         locally-disabled,
         file-ignored,
@@ -78,74 +86,13 @@ disable=print-statement,
         useless-suppression,
         deprecated-pragma,
         use-symbolic-message-instead,
-        apply-builtin,
-        basestring-builtin,
-        buffer-builtin,
-        cmp-builtin,
-        coerce-builtin,
-        execfile-builtin,
-        file-builtin,
-        long-builtin,
-        raw_input-builtin,
-        reduce-builtin,
-        standarderror-builtin,
-        unicode-builtin,
-        xrange-builtin,
-        coerce-method,
-        delslice-method,
-        getslice-method,
-        setslice-method,
-        no-absolute-import,
-        old-division,
-        dict-iter-method,
-        dict-view-method,
-        next-method-called,
-        metaclass-assignment,
-        indexing-exception,
-        raising-string,
-        reload-builtin,
-        oct-method,
-        hex-method,
-        nonzero-method,
-        cmp-method,
-        input-builtin,
-        round-builtin,
-        intern-builtin,
-        unichr-builtin,
-        map-builtin-not-iterating,
-        zip-builtin-not-iterating,
-        range-builtin-not-iterating,
-        filter-builtin-not-iterating,
-        using-cmp-argument,
-        eq-without-hash,
-        div-method,
-        idiv-method,
-        rdiv-method,
-        exception-message-attribute,
-        invalid-str-codec,
-        sys-max-int,
-        bad-python3-import,
-        deprecated-string-function,
-        deprecated-str-translate-call,
-        deprecated-itertools-function,
-        deprecated-types-field,
-        next-method-defined,
-        dict-items-not-iterating,
-        dict-keys-not-iterating,
-        dict-values-not-iterating,
-        deprecated-operator-function,
-        deprecated-urllib-function,
-        xreadlines-attribute,
-        deprecated-sys-function,
-        exception-escape,
-        comprehension-escape,
         missing-function-docstring,
         missing-class-docstring,
         missing-module-docstring,
         too-few-public-methods,
-        super-init-not-called,
         cyclic-import,
-
+        fixme,
+        unspecified-encoding,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -188,7 +135,7 @@ max-nested-blocks=5
 # inconsistent-return-statements if a never returning function is called then
 # it will be considered as an explicit return statement and no message will be
 # printed.
-never-returning-functions=sys.exit
+never-returning-functions=sys.exit,argparse.parse_error
 
 
 [FORMAT]
@@ -211,13 +158,6 @@ max-line-length=120
 
 # Maximum number of lines in a module.
 max-module-lines=1500
-
-# List of optional constructs for which whitespace checking is disabled. `dict-
-# separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
-# `trailing-comma` allows a space between comma and closing bracket: (a, ).
-# `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -250,7 +190,11 @@ bad-names=foo,
           baz,
           toto,
           tutu,
-          tata,
+          tata
+
+# Bad variable names regexes, separated by a comma. If names match any regex,
+# they will always be refused
+bad-names-rgxs=
 
 # Naming style matching correct class attribute names.
 class-attribute-naming-style=any
@@ -258,6 +202,13 @@ class-attribute-naming-style=any
 # Regular expression matching correct class attribute names. Overrides class-
 # attribute-naming-style.
 #class-attribute-rgx=
+
+# Naming style matching correct class constant names.
+class-const-naming-style=UPPER_CASE
+
+# Regular expression matching correct class constant names. Overrides class-
+# const-naming-style.
+#class-const-rgx=
 
 # Naming style matching correct class names.
 class-naming-style=PascalCase
@@ -290,7 +241,15 @@ good-names=i,
            k,
            ex,
            Run,
-           _
+           _,
+           x,
+           y,
+           n,
+           t
+
+# Good variable names regexes, separated by a comma. If names match any regex,
+# they will always be accepted
+good-names-rgxs=
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -344,6 +303,9 @@ notes=FIXME,
       XXX,
       TODO
 
+# Regular expression of note tags to take in consideration.
+#notes-rgx=
+
 
 [SPELLING]
 
@@ -351,8 +313,12 @@ notes=FIXME,
 max-spelling-suggestions=4
 
 # Spelling dictionary name. Available dictionaries: none. To make it work,
-# install the python-enchant package.
+# install the 'python-enchant' package.
 spelling-dict=
+
+# List of comma separated words that should be considered directives if they
+# appear and the beginning of a comment and should not be checked.
+spelling-ignore-comment-directives=fmt: on,fmt: off,noqa:,noqa,nosec,isort:skip,mypy:
 
 # List of comma separated words that should not be checked.
 spelling-ignore-words=
@@ -367,22 +333,28 @@ spelling-store-unknown-words=no
 
 [STRING]
 
-# This flag controls whether the implicit-str-concat-in-sequence should
-# generate a warning on implicit string concatenation in sequences defined over
-# several lines.
+# This flag controls whether inconsistent-quotes generates a warning when the
+# character used as a quote delimiter is used inconsistently within a module.
+check-quote-consistency=yes
+
+# This flag controls whether the implicit-str-concat should generate a warning
+# on implicit string concatenation in sequences defined over several lines.
 check-str-concat-over-line-jumps=no
 
 
 [SIMILARITIES]
 
-# Ignore comments when computing similarities.
+# Comments are removed from the similarity computation
 ignore-comments=yes
 
-# Ignore docstrings when computing similarities.
+# Docstrings are removed from the similarity computation
 ignore-docstrings=yes
 
-# Ignore imports when computing similarities.
+# Imports are removed from the similarity computation
 ignore-imports=no
+
+# Signatures are removed from the similarity computation
+ignore-signatures=no
 
 # Minimum lines number of a similarity.
 min-similarity-lines=4
@@ -398,7 +370,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=
+generated-members=Direction.DOWN.vector
 
 # Tells whether missing members accessed in mixin class should be ignored. A
 # mixin class is detected if its name ends with "mixin" (case insensitive).
@@ -452,6 +424,9 @@ additional-builtins=
 # Tells whether unused global variables should be treated as a violation.
 allow-global-unused-variables=yes
 
+# List of names allowed to shadow builtins
+allowed-redefined-builtins=
+
 # List of strings which can identify a callback function by name. A callback
 # name must start or end with one of those strings.
 callbacks=cb_,
@@ -475,8 +450,8 @@ redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io
 
 [LOGGING]
 
-# Format style used to check logging format string. `old` means using %
-# formatting, `new` is for `{}` formatting,and `fstr` is for f-strings.
+# The type of string formatting that logging methods do. `old` means using %
+# formatting, `new` is for `{}` formatting.
 logging-format-style=old
 
 # Logging modules to check that the string format arguments are in logging
@@ -485,6 +460,9 @@ logging-modules=logging
 
 
 [CLASSES]
+
+# Warn about protected attribute access inside special methods
+check-protected-access-in-special-methods=no
 
 # List of method names used to declare (i.e. assign) instance attributes.
 defining-attr-methods=__init__,
@@ -522,18 +500,19 @@ allow-wildcard-with-all=no
 analyse-fallback-blocks=no
 
 # Deprecated modules which should not be used, separated by a comma.
-deprecated-modules=optparse,tkinter.tix
+deprecated-modules=
 
-# Create a graph of external dependencies in the given file (report RP0402 must
-# not be disabled).
+# Output a graph (.gv or any supported image format) of external dependencies
+# to the given file (report RP0402 must not be disabled).
 ext-import-graph=
 
-# Create a graph of every (i.e. internal and external) dependencies in the
-# given file (report RP0402 must not be disabled).
+# Output a graph (.gv or any supported image format) of all (i.e. internal and
+# external) dependencies to the given file (report RP0402 must not be
+# disabled).
 import-graph=
 
-# Create a graph of internal dependencies in the given file (report RP0402 must
-# not be disabled).
+# Output a graph (.gv or any supported image format) of internal dependencies
+# to the given file (report RP0402 must not be disabled).
 int-import-graph=
 
 # Force import order to recognize a module as part of the standard
@@ -549,11 +528,15 @@ preferred-modules=
 
 [DESIGN]
 
+# List of qualified class names to ignore when counting class parents (see
+# R0901)
+ignored-parents=
+
 # Maximum number of arguments for function / method.
 max-args=5
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=10
+max-attributes=15
 
 # Maximum number of boolean expressions in an if statement (see R0916).
 max-bool-expr=5
@@ -577,7 +560,7 @@ max-returns=6
 max-statements=50
 
 # Minimum number of public methods for a class (see R0903).
-min-public-methods=2
+min-public-methods=1
 
 
 [EXCEPTIONS]

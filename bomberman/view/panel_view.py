@@ -67,7 +67,7 @@ class PanelView(view.ImageView):
         self.font = view.load_font(
             "pf_tempesta_seven_condensed_bold.ttf", inflate_to_reality((PanelView.FONT_SIZE, 1), self.ratio)[1]
         )
-        self.positions = {key: inflate_to_reality(self.POSITIONS[key], self.ratio) for key in self.POSITIONS}
+        self.positions = {key: inflate_to_reality(pos, self.ratio) for key, pos in self.POSITIONS.items()}
 
         self.player_details = {i: PlayerDetails(self.model.players[i], self.ratio) for i in self.model.players}
 
@@ -121,7 +121,7 @@ class PlayerDetails(view.View, observer.Observer):
         self.font = view.load_font(
             "pf_tempesta_seven_condensed_bold.ttf", inflate_to_reality((PanelView.FONT_SIZE, 1), ratio)[1]
         )
-        self.positions = {key: inflate_to_reality(self.POSITIONS[key], ratio) for key in self.POSITIONS}
+        self.positions = {key: inflate_to_reality(pos, ratio) for key, pos in self.POSITIONS.items()}
 
         # TODO: Store the size somewhere ?
         self.player_head = view.load_image(
@@ -140,13 +140,13 @@ class PlayerDetails(view.View, observer.Observer):
 
     def notify(self, event_: event.Event) -> None:
         if isinstance(event_, events.HitEntityEvent):
-            self.health._build_hearts()
+            self.health.build_hearts()
 
         if isinstance(event_, (events.LifeLossEvent, events.PlayerDetailsEvent)):
             self.game_over = self.player.life == 0
-            self.health._build_hearts()
-            self.extra._build_extra()
-            self.bonus._build_bonus()
+            self.health.build_hearts()
+            self.extra.build_extra()
+            self.bonus.build_bonus()
 
     def display(self, surface: pygame.surface.Surface) -> None:
         life_text = self.font.render(f" x{self.player.life}", True, (255, 255, 255)).convert_alpha()
@@ -182,7 +182,10 @@ class HealthView(view.Sprite):
     FILE_NAME = "heart.png"
 
     def __init__(self, player: entity.Player, ratio: float) -> None:
-        self.SPRITE_SIZE = (int(self.SPRITE_SIZE[0] * ratio), int(self.SPRITE_SIZE[1] * ratio))
+        self.SPRITE_SIZE = (  # pylint: disable=invalid-name
+            int(self.SPRITE_SIZE[0] * ratio),
+            int(self.SPRITE_SIZE[1] * ratio),
+        )
 
         image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
         super().__init__(
@@ -196,9 +199,9 @@ class HealthView(view.Sprite):
         # This view does not have the size of the sprite but of several sprites
         self.size = inflate_to_reality(self.SIZE, ratio)
         self.hearts = pygame.surface.Surface(self.size).convert_alpha()
-        self._build_hearts()
+        self.build_hearts()
 
-    def _build_hearts(self) -> None:
+    def build_hearts(self) -> None:
         self.hearts.fill((0, 0, 0, 0))  # Full transparency
 
         # Select the heart given the health
@@ -239,7 +242,10 @@ class ExtraView(view.Sprite):
     FILE_NAME = "extra_icons.png"
 
     def __init__(self, player: entity.Player, ratio: float) -> None:
-        self.SPRITE_SIZE = (int(self.SPRITE_SIZE[0] * ratio), int(self.SPRITE_SIZE[1] * ratio))
+        self.SPRITE_SIZE = (  # pylint: disable=invalid-name
+            int(self.SPRITE_SIZE[0] * ratio),
+            int(self.SPRITE_SIZE[1] * ratio),
+        )
 
         image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
         super().__init__(
@@ -254,9 +260,9 @@ class ExtraView(view.Sprite):
         self.size = inflate_to_reality(self.SIZE, ratio)
 
         self.extra = pygame.surface.Surface(self.size).convert_alpha()
-        self._build_extra()
+        self.build_extra()
 
-    def _build_extra(self) -> None:
+    def build_extra(self) -> None:
         self.extra.fill((0, 0, 0, 0))  # Full transparency
 
         for i, has_letter in enumerate(self.player.extra):
@@ -284,7 +290,10 @@ class BonusView(view.Sprite):
     FILE_NAME = "bonus_icons.png"
 
     def __init__(self, player: entity.Player, ratio: float) -> None:
-        self.SPRITE_SIZE = (int(self.SPRITE_SIZE[0] * ratio), int(self.SPRITE_SIZE[1] * ratio))
+        self.SPRITE_SIZE = (  # pylint: disable=invalid-name
+            int(self.SPRITE_SIZE[0] * ratio),
+            int(self.SPRITE_SIZE[1] * ratio),
+        )
 
         image_total_size = (self.SPRITE_SIZE[0] * self.COLUMNS, self.SPRITE_SIZE[1] * self.ROWS)
         super().__init__(
@@ -300,9 +309,9 @@ class BonusView(view.Sprite):
         # This view does not have the size of the sprite but of several sprites
         self.size = inflate_to_reality(self.SIZE, ratio)
         self.bonus = pygame.surface.Surface(self.size).convert_alpha()
-        self._build_bonus()
+        self.build_bonus()
 
-    def _build_bonus(self) -> None:
+    def build_bonus(self) -> None:
         self.bonus.fill((0, 0, 0, 0))  # Full transparency
 
         # Bomb capacity

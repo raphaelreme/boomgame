@@ -1,7 +1,5 @@
 """Entry point of the game"""
 
-from typing import Dict, List
-
 import pygame
 import pygame.display
 import pygame.event
@@ -27,6 +25,7 @@ class BoomGame:
         self.game_name = ""
         self.score = 0
         self.two_players = True
+        self.maze_solved = 0
 
     def main(self):
         while True:
@@ -36,11 +35,11 @@ class BoomGame:
     def main_menu(self) -> None:
         """Main menu, not implemented yet"""
 
-        c = input("Menu not implemented yet. Two players (y|n) ? ")
-        self.two_players = c.lower().strip() == "y"
+        char = input("Menu not implemented yet. Two players (y|n) ? ")
+        self.two_players = char.lower().strip() == "y"
         try:
             self.maze_solved = int(input("Starting maze ? ")) - 1
-        except:
+        except ValueError:
             self.maze_solved = 0
         self.game_name = "boom"
 
@@ -50,7 +49,7 @@ class BoomGame:
         model = game.GameModel(self.game_name, self.two_players)
         model.maze_solved = self.maze_solved
         main_view = game_view.GameView(model)
-        main_sound = game_sound.GameSound(model)
+        game_sound.GameSound(model)
 
         pygame.display.set_mode(main_view.size, pygame.locals.RESIZABLE)  # type: ignore
         pygame.display.set_caption("BOOM")

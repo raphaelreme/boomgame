@@ -44,7 +44,7 @@ class EntitySound(observer.Observer):
             path = os.path.join(os.path.dirname(__file__), "..", "data", "sound", f"{self.sound_name}{sound}.wav")
             try:
                 sounds[sound] = pygame.mixer.Sound(path)
-            except:
+            except FileNotFoundError:
                 pass
 
         self.sound_loaded[self.sound_name] = sounds
@@ -84,8 +84,6 @@ class PlayerSound(EntitySound):
         player = cast(entity.Player, self.entity)
         return f"Player{player.identifier}"
 
-    def notify(self, event_: event.Event) -> None:
-        super().notify(event_)
         # TODO: Success sound
 
 
@@ -112,7 +110,8 @@ class EnemySound(EntitySound):
 
     def notify(self, event_: event.Event) -> None:
         if not self.entity.is_alien:
-            return super().notify(event_)
+            super().notify(event_)
+            return
 
         if isinstance(event_, events.StartRemovingEvent):
             sounds = self.alien_sound.get_sounds()

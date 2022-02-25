@@ -123,3 +123,10 @@ class ScoreSliderView(AnchoredSliderView):
 
     def __init__(self, maze_view_: maze_view.MazeView, anchor: entity.Entity) -> None:
         super().__init__(view.load_image(f"score_{anchor.SCORE.value}.png"), maze_view_, anchor)
+
+
+class ExtraLifeSliderView(AnchoredSliderView):
+    """Handle all the score sliders"""
+
+    def __init__(self, maze_view_: maze_view.MazeView, anchor: entity.Player) -> None:
+        super().__init__(view.load_image(f"extra_life_{anchor.identifier}.png"), maze_view_, anchor)

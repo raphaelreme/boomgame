@@ -126,6 +126,9 @@ class MazeView(view.View, observer.Observer):
             self.animations.add(animation.ScoreSliderView(self, event_.entity))
             return
 
+        if isinstance(event_, events.ExtraLifeEvent):
+            self.animations.add(animation.ExtraLifeSliderView(self, event_.entity))
+
         if isinstance(event_, events.ForwardTimeEvent):
             for animation_ in self.animations.copy():
                 animation_.forward(event_.delay)

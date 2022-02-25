@@ -782,7 +782,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         if sum(self.extra) == 5:
             self.extra = [False] * 5
             self.life += 1
-            # TODO: Create New life animation (Like score)
+            self.maze.changed(events.ExtraLifeEvent(self))
         self.changed(events.PlayerDetailsEvent(self))
 
     def add_score(self, score: Score) -> None:

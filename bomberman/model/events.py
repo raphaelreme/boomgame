@@ -107,5 +107,16 @@ class StartRemovingEvent(EntityEvent):
 class ScoreEvent(EntityEvent):
     """When score is earned
 
-    Will trigger a score slider
+    Will trigger a score slider (Notify by the entity as a change of the maze)
     """
+
+
+class ExtraLifeEvent(EntityEvent):
+    """When a player completed EXTRA letters
+
+    Will trigger a slider (Notify by the player as a change of the maze)
+    """
+
+    def __init__(self, entity_: entity.Entity):
+        super().__init__(entity_)
+        self.entity: entity.Player

@@ -18,6 +18,7 @@ class MazeSound(observer.Observer):
     failed = "MazeFailed.wav"
     extra_game = "ExtraGame.wav"
     hurry_up = "HurryUp.wav"
+    extra_life = "ExtraLife.wav"
 
     def __init__(self, maze_: maze.Maze) -> None:
         """Constructor
@@ -41,6 +42,9 @@ class MazeSound(observer.Observer):
         )
         self.hurry_up_sound = pygame.mixer.Sound(
             os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.hurry_up)
+        )
+        self.extra_life_sound = pygame.mixer.Sound(
+            os.path.join(os.path.dirname(__file__), "..", "data", "sound", self.extra_life)
         )
 
         # Set of all the views for each component of the maze
@@ -79,4 +83,8 @@ class MazeSound(observer.Observer):
 
         if isinstance(event_, events.HurryUpEvent):
             self.hurry_up_sound.play()
+            return
+
+        if isinstance(event_, events.ExtraLifeEvent):
+            self.extra_life_sound.play()
             return

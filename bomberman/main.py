@@ -29,6 +29,12 @@ class BoomGame:
         self.two_players = True
         self.maze_solved = 0
 
+        # Init the display
+        width, height = pygame.display.Info().current_w, pygame.display.Info().current_h
+        pygame.display.set_mode((int(width * 3 / 4), int(height * 3 / 4)), pygame.locals.RESIZABLE)  # type: ignore
+        pygame.display.set_caption("BOOM")
+        pygame.display.set_icon(view.load_image("game_icon.png"))
+
     def main(self):
         while True:
             self.main_menu()
@@ -58,10 +64,6 @@ class BoomGame:
         main_view = game_view.GameView(model)
         game_sound.GameSound(model)
 
-        pygame.display.set_mode(main_view.size, pygame.locals.RESIZABLE)  # type: ignore
-        pygame.display.set_caption("BOOM")
-        pygame.display.set_icon(view.load_image("game_icon.png"))
-
         model.start()
 
         main_controller = controller.GameController(model)
@@ -84,6 +86,5 @@ class BoomGame:
 
 def main() -> None:
     assert pygame.init()[1] == 0, "Unable to initialize pygame"
-    pygame.display.set_mode((0, 0), pygame.HIDDEN)
     BoomGame().main()  # Entry point of the game
     pygame.quit()

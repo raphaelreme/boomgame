@@ -1,0 +1,6 @@
+Package: BOOM
+Version: <version>
+Architecture: all
+Maintainer: Raphael Reme <raphaelreme-dev@protonmail.com>
+Description: Remake of the old macintosh BOOM game
+

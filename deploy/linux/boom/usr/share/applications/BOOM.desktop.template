@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=<version>
+Type=Application
+Terminal=false
+Exec=/usr/local/bin/BOOM
+Name=BOOM
+Icon=/usr/share/BOOM/icon.png
+

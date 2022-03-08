@@ -43,7 +43,7 @@ class MazeView(view.View, observer.Observer):
         self.maze.add_observer(self)
 
         ## Build the background once for all
-        self.background = pygame.surface.Surface(self.size)
+        self.background = pygame.surface.Surface(self.size).convert_alpha()
         self._build_background(style)
 
         # Set of all the views for each component of the maze

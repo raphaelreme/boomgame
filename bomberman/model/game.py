@@ -36,7 +36,7 @@ class GameModel(observable.Observable):
         RUNNING = 2
         BONUS_SCREEN = 3
 
-    DEFAULT_MAZE_SIZE = (16, 17)
+    DEFAULT_MAZE_SIZE = (13, 15)
     START_SCREEN_DELAY = 2.0
     END_SCREEN_DELAY = 2.0
 

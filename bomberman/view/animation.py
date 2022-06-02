@@ -8,6 +8,61 @@ from . import maze_view
 from . import inflate_to_reality, TILE_SIZE
 
 
+class LoadingAnimation(view.View):
+    """Loading animation when launching the game
+
+    Fake loading bar with bombs.
+    """
+
+    SIZE = (15, 20)  # Size in tiles, takes as much size as panel + maze
+
+    LOGO_DELAY = 2.0
+    SCREEN_DELAY = 2.0
+    BOMB_NUMBER = 12
+    BOMB_OFFSET = (6 / 32, 20 / 32)
+
+    LOADING_BOMB_GREY = "loading_bomb_grey.png"
+    LOADING_BOMB_GREEN = "loading_bomb_green.png"
+    LOADING_LOGO = "loading_logo.png"
+    LOADING_SCREEN = "loading_screen.png"
+
+    def __init__(self) -> None:
+        super().__init__((0, 0), inflate_to_reality(self.SIZE))
+
+        self.delay = 0.0
+        self.done = False
+
+        self.loading_logo = view.load_image(self.LOADING_LOGO, self.size)
+        self.grey_bomb = view.load_image(self.LOADING_BOMB_GREY)
+        self.green_bomb = view.load_image(self.LOADING_BOMB_GREEN)
+        self.loading_screen = view.load_image(self.LOADING_SCREEN, self.size)
+
+    def forward(self, delay: float) -> None:
+        self.delay += delay
+
+        if self.delay > self.LOGO_DELAY + self.SCREEN_DELAY:
+            self.done = True
+
+    def display(self, surface: pygame.surface.Surface) -> None:
+        if self.delay < self.LOGO_DELAY:
+            surface.blit(self.loading_logo, self.position)
+            return
+
+        surface.blit(self.loading_screen, self.position)
+
+        k = int((1 + self.BOMB_NUMBER) * (self.delay - self.LOGO_DELAY) / (self.SCREEN_DELAY))
+
+        for i in range(self.BOMB_NUMBER):
+            bomb = self.green_bomb if i < k else self.grey_bomb
+            surface.blit(
+                bomb,
+                (
+                    self.size[0] / 2 + i * (bomb.get_size()[0] + self.BOMB_OFFSET[0] * TILE_SIZE[0]),
+                    self.size[1] - bomb.get_size()[1] - self.BOMB_OFFSET[1] * TILE_SIZE[0],
+                ),
+            )
+
+
 class MazeAnimationView(view.ImageView):
     """Simple Animation above the maze.
 

@@ -1,0 +1,24 @@
+{
+    "background": "background_menu_1.png",
+    "background_size": [
+        2,
+        2
+    ],
+    "__default": {
+        "z": 0.07,
+        "align": "top-center",
+        "font_size": 0.5,
+        "font_name": "pf_tempesta_seven_bold.ttf",
+        "text_color": "#FFFFFFFF",
+        "text_color_hovered": "#FFFFFFFF",
+        "clicked_delay": 0.5,
+        "image_size": null
+    },
+    "MenuButton": {
+        "font_name": "pf_tempesta_seven_bold.ttf",
+        "font_size": 0.5,
+        "text_color": "#FFFFFFFF",
+        "text_color_hovered": "#FF0000FF",
+        "clicked_delay": 0.5
+    }
+}

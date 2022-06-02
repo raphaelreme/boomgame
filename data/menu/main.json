@@ -1,0 +1,142 @@
+{
+    "theme": "default",
+    "elements": [
+        {
+            "element": "Text",
+            "pos": [
+                0,
+                10
+            ],
+            "text": "@Factor Software presents",
+            "font_name": "pf_tempesta_seven_bold.ttf",
+            "text_color": "#FF6600FF"
+        },
+        {
+            "element": "Image",
+            "pos": [
+                1,
+                10
+            ],
+            "z": 0.3,
+            "image_name": "BOOM.png"
+        },
+        {
+            "element": "Text",
+            "pos": [
+                5.5,
+                10
+            ],
+            "text": "@Created by",
+            "font_name": "pf_tempesta_seven_bold.ttf",
+            "text_color": "#FF6600FF"
+        },
+        {
+            "element": "Text",
+            "pos": [
+                6.5,
+                10
+            ],
+            "text": "@Federico Filipponi & Raphael Reme",
+            "font_name": "pf_tempesta_seven_bold.ttf",
+            "text_color": "#FF6600FF"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                8.0,
+                10.0
+            ],
+            "text": "@NEW GAME",
+            "action": "new_game"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                9.0,
+                10.0
+            ],
+            "text": "@OPEN GAME",
+            "action": "open_game"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                10.0,
+                10.0
+            ],
+            "text": "@OPTIONS",
+            "action": "options"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                11.0,
+                10.0
+            ],
+            "text": "@SCORES",
+            "action": "scores"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                12.0,
+                10.0
+            ],
+            "text": "@INFO",
+            "action": "info"
+        },
+        {
+            "element": "Button",
+            "style": "MenuButton",
+            "pos": [
+                13.0,
+                10.0
+            ],
+            "text": "@QUIT",
+            "action": "quit"
+        },
+        {
+            "element": "Image",
+            "align": "bottom-center",
+            "pos": [
+                13.7,
+                2.5
+            ],
+            "image_name": "player_head1.png"
+        },
+        {
+            "element": "Text",
+            "align": "bottom-center",
+            "pos": [
+                14.5,
+                2.5
+            ],
+            "text": "@credits: 3",
+            "text_color": "#66CCFFFF"
+        },
+        {
+            "element": "Image",
+            "align": "bottom-center",
+            "pos": [
+                13.7,
+                17.5
+            ],
+            "image_name": "player_head2.png"
+        },
+        {
+            "element": "Text",
+            "align": "bottom-center",
+            "pos": [
+                14.5,
+                17.5
+            ],
+            "text": "@credits: 3",
+            "text_color": "#66CCFFFF"
+        }
+    ]
+}

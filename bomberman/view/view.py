@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pygame
 import pygame.display
@@ -16,7 +16,7 @@ from .. import DATA_FOLDER
 from . import TILE_SIZE
 
 
-def load_image(file_name: str, size: Tuple[int, int] = None) -> pygame.surface.Surface:
+def load_image(file_name: str, size: Optional[Tuple[int, int]] = None) -> pygame.surface.Surface:
     """Load an image from the image folder (bomberman/data/image).
 
     Should only be called when the main window (mode) has been set.

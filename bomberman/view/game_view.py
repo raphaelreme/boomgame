@@ -103,7 +103,7 @@ class CenteredText(view.View):
         lines = text.split("\n")
         self.images = [self.font.render(line, True, (255, 255, 255)) for line in lines]
 
-        text_height = sum([image.get_size()[1] for image in self.images])
+        text_height = sum((image.get_size()[1] for image in self.images))
         self.rects = []
         height = (self.size[1] - text_height) // 2
         for image in self.images:

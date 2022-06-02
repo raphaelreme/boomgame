@@ -20,7 +20,10 @@ from . import view
 
 
 def display_with_shadow(
-    surface: pygame.surface.Surface, image: pygame.surface.Surface, position: Tuple[int, int], ratio: float
+    surface: pygame.surface.Surface,
+    image: pygame.surface.Surface,
+    position: Tuple[int, int],
+    shadow_offset: Tuple[int, int],
 ) -> None:
     """Blit an image with an underlying shadow.
 
@@ -29,12 +32,11 @@ def display_with_shadow(
         image (pygame.surface.Surface): Image to draw
         position (Tuple[int, int]): Position of the drawing.
             The shadow is displayed 3 pixels right and down.
+        shadow_offset (Tuple[int, int]): Offset of the shadow
     """
     # Build the shadow image
     shadow = image.copy()
     shadow.fill((0, 0, 0, 200), special_flags=pygame.BLEND_RGBA_MIN)
-
-    shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, ratio)
 
     surface.blit(shadow, (position[0] + shadow_offset[0], position[1] + shadow_offset[1]))
     surface.blit(image, position)
@@ -61,6 +63,7 @@ class PanelView(view.ImageView):
     def __init__(self, model: game.GameModel) -> None:
         self.model = model
         self.ratio = (self.model.maze.size[0] + 2) / self.SIZE[0]
+        self.shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, self.ratio)
 
         super().__init__(view.load_image("panel.png", inflate_to_reality(self.SIZE, self.ratio)), (0, 0))
 
@@ -87,7 +90,8 @@ class PanelView(view.ImageView):
 
         time_text = self.font.render(f"{minutes:02d}:{seconds:02d}", True, color).convert_alpha()
 
-        display_with_shadow(surface, time_text, self.positions["time"], self.ratio)
+        display_with_shadow(surface, time_text, self.positions["time"], self.shadow_offset)
+
         for i in self.player_details:
             self.player_details[i].display(surface.subsurface(self.rect_player_details[i]))
 
@@ -114,6 +118,7 @@ class PlayerDetails(view.View, observer.Observer):
         super().__init__((0, 0), inflate_to_reality(self.SIZE, ratio))
 
         self.ratio = ratio
+        self.shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, self.ratio)
 
         self.player = player
         self.player.add_observer(self)
@@ -153,16 +158,16 @@ class PlayerDetails(view.View, observer.Observer):
         score_text = self.font.render("score", True, (255, 255, 255)).convert_alpha()
         score_value = self.font.render(f"{self.player.score:06d}", True, (255, 255, 255)).convert_alpha()
 
-        display_with_shadow(surface, self.player_head, self.positions["player_head"], self.ratio)
-        display_with_shadow(surface, life_text, self.positions["life"], self.ratio)
-        display_with_shadow(surface, score_text, self.positions["score_text"], self.ratio)
-        display_with_shadow(surface, score_value, self.positions["score_value"], self.ratio)
+        display_with_shadow(surface, self.player_head, self.positions["player_head"], self.shadow_offset)
+        display_with_shadow(surface, life_text, self.positions["life"], self.shadow_offset)
+        display_with_shadow(surface, score_text, self.positions["score_text"], self.shadow_offset)
+        display_with_shadow(surface, score_value, self.positions["score_value"], self.shadow_offset)
 
         if self.game_over:
             game_text = self.font.render("GAME", True, (255, 255, 255)).convert_alpha()
             over_text = self.font.render("OVER", True, (255, 255, 255)).convert_alpha()
-            display_with_shadow(surface, game_text, self.positions["game"], self.ratio)
-            display_with_shadow(surface, over_text, self.positions["over"], self.ratio)
+            display_with_shadow(surface, game_text, self.positions["game"], self.shadow_offset)
+            display_with_shadow(surface, over_text, self.positions["over"], self.shadow_offset)
         else:
             self.health.display(surface.subsurface(self.health_rect))
 
@@ -195,6 +200,7 @@ class HealthView(view.Sprite):
 
         self.player = player
         self.ratio = ratio
+        self.shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, self.ratio)
 
         # This view does not have the size of the sprite but of several sprites
         self.size = inflate_to_reality(self.SIZE, ratio)
@@ -215,7 +221,7 @@ class HealthView(view.Sprite):
                         self.select_sprite(0, 1)
                         heart = self.sprite_image.subsurface(self.current_sprite)
                         display_with_shadow(
-                            self.hearts, heart, (self.SPRITE_SIZE[0] * j, self.SPRITE_SIZE[1] * i), self.ratio
+                            self.hearts, heart, (self.SPRITE_SIZE[0] * j, self.SPRITE_SIZE[1] * i), self.shadow_offset
                         )
                         self.select_sprite(0, 0)
                         heart = self.sprite_image.subsurface(self.current_sprite)
@@ -224,7 +230,9 @@ class HealthView(view.Sprite):
                     self.select_sprite(0, 0)
                     heart = self.sprite_image.subsurface(self.current_sprite)
 
-                display_with_shadow(self.hearts, heart, (self.SPRITE_SIZE[0] * j, self.SPRITE_SIZE[1] * i), self.ratio)
+                display_with_shadow(
+                    self.hearts, heart, (self.SPRITE_SIZE[0] * j, self.SPRITE_SIZE[1] * i), self.shadow_offset
+                )
 
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.hearts, self.position)
@@ -255,6 +263,7 @@ class ExtraView(view.Sprite):
 
         self.player = player
         self.ratio = ratio
+        self.shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, self.ratio)
 
         # This view does not have the size of the sprite but of several sprites
         self.size = inflate_to_reality(self.SIZE, ratio)
@@ -272,7 +281,7 @@ class ExtraView(view.Sprite):
                 self.select_sprite(0, 0)
 
             icon = self.sprite_image.subsurface(self.current_sprite)
-            display_with_shadow(self.extra, icon, (i * (self.SPRITE_SIZE[0] + 2), 0), self.ratio)
+            display_with_shadow(self.extra, icon, (i * (self.SPRITE_SIZE[0] + 2), 0), self.shadow_offset)
 
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.extra, self.position)
@@ -305,6 +314,7 @@ class BonusView(view.Sprite):
 
         self.player = player
         self.ratio = ratio
+        self.shadow_offset = inflate_to_reality(PanelView.SHADOW_OFFSET, self.ratio)
 
         # This view does not have the size of the sprite but of several sprites
         self.size = inflate_to_reality(self.SIZE, ratio)
@@ -317,33 +327,35 @@ class BonusView(view.Sprite):
         # Bomb capacity
         self.select_sprite(0, 0)
         icon = self.sprite_image.subsurface(self.current_sprite)
-        display_with_shadow(self.bonus, icon, (0, 0), self.ratio)
+        display_with_shadow(self.bonus, icon, (0, 0), self.shadow_offset)
 
         capacity_text = self.font.render(f" x{self.player.bomb_capacity}", True, (255, 255, 255)).convert_alpha()
-        display_with_shadow(self.bonus, capacity_text, (0, self.SPRITE_SIZE[1]), self.ratio)
+        display_with_shadow(self.bonus, capacity_text, (0, self.SPRITE_SIZE[1]), self.shadow_offset)
 
         # Fast bomb
         self.select_sprite(int(not self.player.fast_bomb), 1)
         icon = self.sprite_image.subsurface(self.current_sprite)
-        display_with_shadow(self.bonus, icon, (self.SPRITE_SIZE[0] + 1, 0), self.ratio)
+        display_with_shadow(self.bonus, icon, (self.SPRITE_SIZE[0] + 1, 0), self.shadow_offset)
 
         # Laser
         self.select_sprite(0, 2)
         icon = self.sprite_image.subsurface(self.current_sprite)
-        display_with_shadow(self.bonus, icon, (2 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+        display_with_shadow(self.bonus, icon, (2 * (self.SPRITE_SIZE[0] + 1), 0), self.shadow_offset)
 
         laser_text = self.font.render(f" x{self.player.bomb_radius}", True, (255, 255, 255)).convert_alpha()
-        display_with_shadow(self.bonus, laser_text, (2 * (self.SPRITE_SIZE[1] + 1), self.SPRITE_SIZE[1]), self.ratio)
+        display_with_shadow(
+            self.bonus, laser_text, (2 * (self.SPRITE_SIZE[1] + 1), self.SPRITE_SIZE[1]), self.shadow_offset
+        )
 
         # Shield
         self.select_sprite(int(not self.player.shield.is_active), 3)
         icon = self.sprite_image.subsurface(self.current_sprite)
-        display_with_shadow(self.bonus, icon, (3 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+        display_with_shadow(self.bonus, icon, (3 * (self.SPRITE_SIZE[0] + 1), 0), self.shadow_offset)
 
         # Fast
         self.select_sprite(int(not self.player.fast.is_active), 4)
         icon = self.sprite_image.subsurface(self.current_sprite)
-        display_with_shadow(self.bonus, icon, (4 * (self.SPRITE_SIZE[0] + 1), 0), self.ratio)
+        display_with_shadow(self.bonus, icon, (4 * (self.SPRITE_SIZE[0] + 1), 0), self.shadow_offset)
 
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.bonus, self.position)

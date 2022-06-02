@@ -7,8 +7,7 @@ the window.
 from typing import Tuple
 
 
-RATIO = 1.0
-TILE_SIZE = (int(32 * RATIO), int(32 * RATIO))
+TILE_SIZE = (32, 32)
 
 
 def inflate_to_reality(base: Tuple[float, float], ratio: float = 1) -> Tuple[int, int]:

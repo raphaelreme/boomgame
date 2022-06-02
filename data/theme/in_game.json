@@ -1,0 +1,17 @@
+{
+    "background": "background_menu_2.png",
+    "background_size": [
+        2,
+        1
+    ],
+    "__default": {
+        "z": 0.07,
+        "align": "top-center",
+        "font_size": 0.5,
+        "font_name": "pf_tempesta_seven_bold.ttf",
+        "text_color": "#FF0000FF",
+        "text_color_hovered": "#0000FFFF",
+        "clicked_delay": 1.0,
+        "image_size": null
+    }
+}

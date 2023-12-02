@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Tuple
 
-from .. import DATA_FOLDER
+from .. import resources
 
 
 class Theme:  # Ugly
@@ -27,7 +27,8 @@ class Theme:  # Ugly
     DEFAULT = "__default"
 
     def __init__(self, name: str) -> None:
-        self.data: dict = json.loads((DATA_FOLDER / "theme" / f"{name}.json").read_text())
+        resource = resources.joinpath("theme").joinpath(f"{name}.json")
+        self.data: dict = json.loads(resource.read_text())
         self.background: str = self.data["background"]
         self.background_size: Tuple[float, float] = self.data["background_size"]
 

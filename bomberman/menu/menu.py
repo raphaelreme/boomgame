@@ -6,9 +6,11 @@ from typing import Callable, Dict, List
 
 import pygame.surface
 
-from .. import DATA_FOLDER
+from .. import resources
 from ..view import view, inflate_to_reality
 from . import actions, element, theme
+
+# TODO: Other pages + settings
 
 
 class PageEnum(enum.Enum):
@@ -37,7 +39,8 @@ class Menu(view.View):
     def __init__(self, start_callback, quit_callback) -> None:
         super().__init__((0, 0), inflate_to_reality(self.SIZE))
         self.lang = "en"
-        self.traductions: Dict[str, str] = json.loads((DATA_FOLDER / "menu" / "lang" / f"{self.lang}.json").read_text())
+        resource = resources.joinpath("menu").joinpath("lang").joinpath(f"{self.lang}.json")
+        self.traductions: Dict[str, str] = json.loads(resource.read_text())
         self.page = Page(PageEnum.MAIN, PageEnum.MAIN, self)
 
         self.start_callback = start_callback
@@ -63,7 +66,8 @@ class Page(view.View):
         self.previous = previous
         self.actions = self.menu.actions[self.page]
 
-        page_config = json.loads((DATA_FOLDER / "menu" / f"{page.value}.json").read_text())
+        resource = resources.joinpath("menu").joinpath(f"{page.value}.json")
+        page_config = json.loads(resource.read_text())
         self.theme = theme.Theme(page_config["theme"])
 
         self.interactive_elements: List[element.InteractiveElement] = []

@@ -21,10 +21,6 @@ from .view import animation
 from .view import game_view
 from .view import view
 
-# TODO: Menu + Settings
-
-DEBUG = True
-
 
 class BoomGame:
     """BOOM Game.

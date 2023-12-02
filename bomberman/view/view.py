@@ -12,7 +12,7 @@ import pygame.rect
 import pygame.surface
 import pygame.transform
 
-from .. import DATA_FOLDER
+from .. import resources
 from . import TILE_SIZE
 
 
@@ -28,11 +28,11 @@ def load_image(file_name: str, size: Optional[Tuple[int, int]] = None) -> pygame
     Return:
         pygame.surface.Surface: The image loaded.
     """
-    real_location = str(DATA_FOLDER / "image" / file_name)
+    resource = resources.joinpath("image").joinpath(file_name)
 
     if size:
-        return pygame.transform.scale(pygame.image.load(real_location).convert_alpha(), size)
-    return pygame.image.load(real_location).convert_alpha()
+        return pygame.transform.scale(pygame.image.load(resource).convert_alpha(), size)
+    return pygame.image.load(resource).convert_alpha()
 
 
 def load_font(file_name: str, size: int) -> pygame.font.Font:
@@ -45,9 +45,9 @@ def load_font(file_name: str, size: int) -> pygame.font.Font:
     Return:
         pygame.font.Font: The font loaded.
     """
-    real_location = str(DATA_FOLDER / "font" / file_name)
+    resource = resources.joinpath("font").joinpath(file_name)
 
-    return pygame.font.Font(real_location, size)
+    return pygame.font.Font(resource, size)
 
 
 class View:

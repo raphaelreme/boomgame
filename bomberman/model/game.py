@@ -4,7 +4,7 @@ import enum
 import json
 from typing import Dict, List
 
-from .. import DATA_FOLDER
+from .. import resources
 from ..designpattern import observable
 from . import maze
 from . import entity
@@ -42,8 +42,8 @@ class GameModel(observable.Observable):
 
     def __init__(self, game_name: str, two_players: bool = False) -> None:
         super().__init__()
-        path = DATA_FOLDER / "game" / f"{game_name}.json"
-        self.levels: List[Dict[str, int]] = json.loads(path.read_text())
+        resource = resources.joinpath("game").joinpath(f"{game_name}.json")
+        self.levels: List[Dict[str, int]] = json.loads(resource.read_text())
 
         self.state = GameModel.State.MENU
 
@@ -77,8 +77,8 @@ class GameModel(observable.Observable):
         self.time = level["time"]
         maze_id = level["maze_id"]
 
-        path = DATA_FOLDER / "maze" / f"{maze_id}.txt"
-        self.maze = maze.Maze.unserialize(path.read_text())
+        resource = resources.joinpath("maze").joinpath(f"{maze_id}.txt")
+        self.maze = maze.Maze.unserialize(resource.read_text())
         # assert self.maze.size == self.MAZE_SIZE, f"This game only supports maze with a size {self.MAZE_SIZE}"
 
         for player in self.players.values():

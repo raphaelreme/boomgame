@@ -7,7 +7,7 @@ import enum
 
 from pygame import locals as p_locals
 
-from .. import DATA_FOLDER
+from .. import resources
 
 
 class TypeControl(enum.IntEnum):
@@ -72,13 +72,14 @@ class PlayerControl:
         return control
 
     def save(self) -> None:
-        with open(DATA_FOLDER / "control" / f"player{self.identifier}.txt", "w") as file:
+        resource = resources.joinpath("control").joinpath(f"player{self.identifier}.txt")
+        with resource.open("w") as file:  # XXX: Writing here will not work if zipped or bundled
             file.write(self.serialize())
 
     @staticmethod
     def from_identifier(identifier: int) -> PlayerControl:
-        path = DATA_FOLDER / "control" / f"player{identifier}.txt"
-        if not path.exists():
+        resource = resources.joinpath("control").joinpath(f"player{identifier}.txt")
+        if not resource.is_file():
             return PlayerControl(identifier)
 
-        return PlayerControl.unserialize(path.read_text(), identifier)
+        return PlayerControl.unserialize(resource.read_text(), identifier)

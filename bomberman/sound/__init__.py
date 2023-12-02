@@ -2,7 +2,7 @@
 
 import pygame.mixer
 
-from .. import DATA_FOLDER
+from .. import resources
 
 
 def load_sound(file_name: str) -> pygame.mixer.Sound:
@@ -14,9 +14,9 @@ def load_sound(file_name: str) -> pygame.mixer.Sound:
     Return:
         pygame.mixer.Sound: The sound loaded.
     """
-    real_location = DATA_FOLDER / "sound" / file_name
+    resource = resources.joinpath("sound").joinpath(file_name)
 
-    return pygame.mixer.Sound(str(real_location))
+    return pygame.mixer.Sound(resource)
 
 
 def load_music(file_name: str) -> None:
@@ -25,6 +25,6 @@ def load_music(file_name: str) -> None:
     Args:
         file_name (str): music file
     """
-    real_location = DATA_FOLDER / "music" / file_name
+    resource = resources.joinpath("music").joinpath(file_name)
 
-    pygame.mixer.music.load(str(real_location))
+    pygame.mixer.music.load(resource)

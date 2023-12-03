@@ -8,14 +8,10 @@ import pygame
 import pygame.rect
 import pygame.surface
 
-from ..designpattern import event
-from ..designpattern import observer
-from ..model import events
-from ..model import maze
+from ..designpattern import event, observer
+from ..model import events, maze
 from . import TILE_SIZE, inflate_to_reality
-from . import entity_view
-from . import animation
-from . import view
+from . import animation, entity_view, view
 
 
 class MazeView(view.View, observer.Observer):

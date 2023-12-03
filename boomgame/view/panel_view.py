@@ -7,11 +7,8 @@ import pygame.font
 import pygame.rect
 import pygame.surface
 
-from ..designpattern import event
-from ..designpattern import observer
-from ..model import events
-from ..model import game
-from ..model import entity
+from ..designpattern import event, observer
+from ..model import entity, events, game
 from . import TILE_SIZE, inflate_to_reality
 from . import view
 

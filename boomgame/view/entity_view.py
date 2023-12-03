@@ -8,13 +8,10 @@ import pygame.surface
 import pygame.rect
 import pygame.transform
 
+from ..designpattern import event, observer
+from ..model import entity, events, vector
 from . import TILE_SIZE, inflate_to_reality
 from . import view
-from ..designpattern import event
-from ..designpattern import observer
-from ..model import entity
-from ..model import events
-from ..model import vector
 
 
 class EntityView(view.Sprite, observer.Observer):

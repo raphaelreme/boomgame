@@ -12,14 +12,11 @@ import pygame.surface
 import pygame.time
 import pygame.transform
 
-from .controller import control
-from .controller import controller
+from .controller import control, controller
 from .menu import menu
 from .model import game
 from .sound import game_sound
-from .view import animation
-from .view import game_view
-from .view import view
+from .view import animation, game_view, view
 
 
 class BoomGame:

@@ -6,10 +6,7 @@ from typing import Dict, List
 
 from .. import resources
 from ..designpattern import observable
-from . import maze
-from . import entity
-from . import events
-from . import timer
+from . import maze, entity, events, timer
 
 
 class GameModel(observable.Observable):

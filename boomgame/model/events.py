@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from . import entity
 from ..designpattern.event import Event
+from . import entity
 
 
 class MazeStartEvent(Event):

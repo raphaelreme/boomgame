@@ -5,8 +5,8 @@ import pygame.mixer
 
 from ..designpattern import event, observer
 from ..model import events, game
-from . import maze_sound
 from . import load_music
+from . import maze_sound
 
 
 class GameSound(observer.Observer):

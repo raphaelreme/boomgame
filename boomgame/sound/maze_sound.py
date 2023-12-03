@@ -5,8 +5,8 @@ import pygame.mixer
 
 from ..designpattern import event, observer
 from ..model import events, maze
-from . import entity_sound
 from . import load_sound
+from . import entity_sound
 
 
 # TODO: Adjust volume of different sounds ?
@@ -76,4 +76,3 @@ class MazeSound(observer.Observer):
 
         if isinstance(event_, events.ExtraLifeEvent):
             self.extra_life_sound.play()
-            return

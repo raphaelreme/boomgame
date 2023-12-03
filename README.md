@@ -1,5 +1,7 @@
 # BoomGame
 
+![Example](boom.gif)
+
 Re-implementation of BOOM game (old macintosh game) with python & pygame.
 
 [BOOM](https://www.macintoshrepository.org/3582-boom) was created by Federico Filipponi (FactorSoftware) in the ’90s. It is an arcade game that can be played by up to two player on a single computer. Players are facing an alien invasion in 80 levels. Their goal is to elimitate all the aliens with their bombs.

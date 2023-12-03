@@ -12,7 +12,7 @@ else:
     import importlib.resources as importlib_resources  # type: ignore
 
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 resources = importlib_resources.files("boomgame.data")
 
 

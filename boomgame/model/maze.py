@@ -9,10 +9,7 @@ import enum
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
 from ..designpattern import observable
-from . import entity
-from . import events
-from . import timer
-from . import vector
+from . import entity, events, timer, vector
 
 
 class MazeException(Exception):

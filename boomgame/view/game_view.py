@@ -6,14 +6,10 @@ import pygame.surface
 import pygame.rect
 import pygame.transform
 
-from ..designpattern import event
-from ..designpattern import observer
-from ..model import game
-from ..model import events
+from ..designpattern import event, observer
+from ..model import game, events
 from . import inflate_to_reality
-from . import maze_view
-from . import panel_view
-from . import view
+from . import maze_view, panel_view, view
 
 
 class GameView(view.View, observer.Observer):

@@ -3,9 +3,8 @@ from __future__ import annotations
 import pygame.surface
 
 from ..model import entity
-from . import view
-from . import maze_view
 from . import inflate_to_reality, TILE_SIZE
+from . import maze_view, view
 
 
 class LoadingAnimation(view.View):

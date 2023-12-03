@@ -10,10 +10,7 @@ import random
 from typing import cast, Dict, List, Optional, Set, Tuple
 
 from ..designpattern import observable
-from . import events
-from . import maze
-from . import timer
-from . import vector
+from . import events, maze, timer, vector
 
 
 class Score(enum.IntEnum):

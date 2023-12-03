@@ -1,6 +1,6 @@
 """Entry point for pyinstaller"""
 
-from bomberman import main
+from boomgame import main
 
 
 if __name__ == "__main__":

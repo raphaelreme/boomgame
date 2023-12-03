@@ -6,7 +6,7 @@ from .. import resources
 
 
 def load_sound(file_name: str) -> pygame.mixer.Sound:
-    """Load a sound from the sound folder (bomberman/data/sound).
+    """Load a sound from the sound folder (boomgame/data/sound).
 
     Args:
         file_name (str): sound file
@@ -20,7 +20,7 @@ def load_sound(file_name: str) -> pygame.mixer.Sound:
 
 
 def load_music(file_name: str) -> None:
-    """Load a music from the music folder (bomberman/data/music).
+    """Load a music from the music folder (boomgame/data/music).
 
     Args:
         file_name (str): music file

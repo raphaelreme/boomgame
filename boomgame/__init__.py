@@ -1,4 +1,4 @@
-"""Bomberman game using pygame."""
+"""BOOM remake based on pygame."""
 
 import sys
 
@@ -12,8 +12,8 @@ else:
     import importlib.resources as importlib_resources  # type: ignore
 
 
-__version__ = "0.3.0dev"
-resources = importlib_resources.files("bomberman.data")
+__version__ = "0.4.0"
+resources = importlib_resources.files("boomgame.data")
 
 
 def display_version() -> None:

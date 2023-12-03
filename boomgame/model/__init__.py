@@ -1,4 +1,4 @@
-"""Model of the bomberman.
+"""BOOM model
 
 All the game logic is here.
 """

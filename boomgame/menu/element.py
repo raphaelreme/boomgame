@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import pygame
 
-from bomberman.menu import element_properties, menu
-
 from ..view import panel_view, view, inflate_to_reality, TILE_SIZE
 from . import element_properties, menu
 

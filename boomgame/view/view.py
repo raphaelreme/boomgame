@@ -17,7 +17,7 @@ from . import TILE_SIZE
 
 
 def load_image(file_name: str, size: Optional[Tuple[int, int]] = None) -> pygame.surface.Surface:
-    """Load an image from the image folder (bomberman/data/image).
+    """Load an image from the image folder (boomgame/data/image).
 
     Should only be called when the main window (mode) has been set.
 
@@ -36,7 +36,7 @@ def load_image(file_name: str, size: Optional[Tuple[int, int]] = None) -> pygame
 
 
 def load_font(file_name: str, size: int) -> pygame.font.Font:
-    """Load a font from the font folder (bomberman/data/font).
+    """Load a font from the font folder (boomgame/data/font).
 
     Args:
         file_name (str): font file (.ttf)

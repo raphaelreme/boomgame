@@ -104,8 +104,8 @@ class ImageElement(Element):
         self.image = view.load_image(
             properties.image_name, None if properties.image_size is None else inflate_to_reality(properties.image_size)
         )
-        w, h = self.image.get_size()
-        self.size = (w + self.shadow_offset[0], h + self.shadow_offset[1])
+        width, height = self.image.get_size()
+        self.size = (width + self.shadow_offset[0], height + self.shadow_offset[1])
 
 
 class TextElement(Element):
@@ -127,8 +127,8 @@ class TextElement(Element):
         # TODO: Handle variables
         self.properties.text = text
         self.image = self.font.render(text, True, self.properties.text_color).convert_alpha()
-        w, h = self.image.get_size()
-        self.size = (w + self.shadow_offset[0], h + self.shadow_offset[1])
+        width, height = self.image.get_size()
+        self.size = (width + self.shadow_offset[0], height + self.shadow_offset[1])
 
 
 class ButtonElement(TextElement, InteractiveElement):

@@ -62,8 +62,6 @@ jobs:
           cd deploy/linux
           bash build.sh
           mv dist/BOOM BOOM-${{ matrix.os }}
-          ls
-          ls boom_$(boom_version)-1_all.deb
           mv boom_$(boom_version)-1_all.deb "boom_$(boom_version)-1_all (${{ matrix.os }}).deb"
       - name: Upload artifacts for linux
         uses: actions/upload-artifact@v3
@@ -94,11 +92,12 @@ jobs:
           cd deploy/macos
           pyinstaller BOOM.spec
           mv dist/BOOM.app BOOM-${{ matrix.os }}.app
+          zip -r BOOM-${{ matrix.os }}.app.zip BOOM-${{ matrix.os }}.app
       - name: Upload artifacts for macos
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.os }}-artifacts
-          path: deploy/macos/BOOM-${{ matrix.os }}.app
+          path: deploy/macos/BOOM-${{ matrix.os }}.app.zip
   build-windows:
     runs-on: ${{ matrix.os }}
     strategy:

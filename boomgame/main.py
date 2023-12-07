@@ -1,5 +1,6 @@
 """Entry point of the game"""
 
+import asyncio
 import enum
 from typing import Dict, Tuple
 
@@ -110,7 +111,7 @@ class BoomGame:
 
         pygame.transform.scale(real_game_surface, game_size, inflated_game_surface)
 
-    def main(self):
+    async def async_main(self):
         timer = pygame.time.Clock()
         while self.running:
             for event in pygame.event.get():
@@ -124,6 +125,10 @@ class BoomGame:
 
             self.display()
             pygame.display.flip()
+            await asyncio.sleep(0)
+
+    def main(self):
+        asyncio.run(self.async_main())
 
     def scale_mouse_get_pos(self, get_pos):
         """Wraps mouse get_pos  to scale the pos with the current offset/ratio"""

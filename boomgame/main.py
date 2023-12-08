@@ -13,14 +13,17 @@ import pygame.surface
 import pygame.time
 import pygame.transform
 
+from boomgame.designpattern import event
+
 from .controller import control, controller
+from .designpattern import event, observer
 from .menu import menu
-from .model import game
+from .model import game, events
 from .sound import game_sound
 from .view import animation, game_view, view
 
 
-class BoomGame:
+class BoomGame(observer.Observer):
     """BOOM Game.
 
     Handle the main pygame loop of the game. Dispacth events and display. Handle window scaling
@@ -54,21 +57,21 @@ class BoomGame:
         # Wrap pygame.mouse.get_pos
         pygame.mouse.get_pos = self.scale_mouse_get_pos(pygame.mouse.get_pos)
 
-    def handle(self, event) -> None:
+    def handle(self, event_) -> None:
         """Handle a pygame event"""
         # Scale mouse pos
-        if hasattr(event, "pos"):
-            event.pos = self.scale(event.pos)
+        if hasattr(event_, "pos"):
+            event_.pos = self.scale(event_.pos)
 
         if self.state == self.State.LOADING:
             return
 
         if self.state == self.State.MENU:
-            self.menu.handle_event(event)
+            self.menu.handle_event(event_)
 
         if self.state == self.State.RUNNING:
             # PAUSE ?
-            self.game_controller.handle_user_event(event)
+            self.game_controller.handle_user_event(event_)
 
     def forward(self, delta_time: float) -> None:
         """Forward time in the game"""
@@ -82,6 +85,11 @@ class BoomGame:
 
         if self.state == self.State.RUNNING:
             self.game_controller.tick(delta_time)
+
+    def notify(self, event_: event.Event) -> None:
+        if isinstance(event_, events.GameEndEvent):
+            self.menu = menu.Menu(self.start_game, self.quit)  # Reset the menu
+            self.state = self.State.MENU
 
     def display(self):
         """Display the game on the main surface"""
@@ -114,11 +122,11 @@ class BoomGame:
     async def async_main(self):
         timer = pygame.time.Clock()
         while self.running:
-            for event in pygame.event.get():
-                if event.type == control.TypeControl.QUIT:
+            for event_ in pygame.event.get():
+                if event_.type == control.TypeControl.QUIT:
                     self.running = False
                     break
-                self.handle(event)
+                self.handle(event_)
 
             delta_time = timer.tick(48) / 1000
             self.forward(delta_time)
@@ -145,6 +153,7 @@ class BoomGame:
     def start_game(self, two_players: bool, maze_solved: int):
         self.state = self.State.RUNNING
         self.game = game.GameModel("boom", two_players)
+        self.game.add_observer(self)
         self.game.maze_solved = maze_solved
 
         self.game_controller = controller.GameController(self.game)

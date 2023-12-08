@@ -14,7 +14,7 @@ else:
 # pylint: enable=import-error
 
 
-__version__ = "0.4.3"
+__version__ = "0.4.4"
 resources = importlib_resources.files("boomgame.data")
 
 

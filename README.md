@@ -2,22 +2,36 @@
 
 ![Example](boom.gif)
 
-Re-implementation of BOOM game (old macintosh game) with python & pygame.
+Remake of BOOM (old macintosh game) with python & pygame.
 
 [BOOM](https://www.macintoshrepository.org/3582-boom) was created by Federico Filipponi (FactorSoftware) in the ’90s. It is an arcade game that can be played by up to two player on a single computer. Players are facing an alien invasion in 80 levels. Their goal is to elimitate all the aliens with their bombs.
 
-The game is not supported any more and can be played only on macos X (> 10 years old). This is a fan remake of BOOM in python using pygame library. This implementation can run on any os/laptop that support python3 and pygame. **NOTE: The original BOOM assets belong to Factor Software. We do not hold any intellectual property upon them.** We only provide standalone executable for a few modern plateform. You may have to install python and install from pypi to run BOOM on your specific platform.
+The game is not supported any more and can be played only on macos X (> 10 years old). This is a fan remake of BOOM in python using pygame library. This implementation can run on any os/laptop that support python3 and pygame. **NOTE: The original BOOM assets belong to Factor Software. We do not hold any intellectual property upon them.** You can play on your browser on [github.io](https://raphaelreme.github.io/boomgame/). We also provide standalone executables for a few modern plateforms. You may have to install python and install from pypi to run BOOM on your specific platform.
 
 This work is still in development. A more mature remake of the game in C++ is available in the [Lifish](https://github.com/silverweed/lifish) project.
 
-## Install
-### Download standalone or package
+## Story
+It’s happened again. The Earth is facing a new alien threat and who’s called to save our beloved planet? You guessed!
+
+The aliens have the capability of transform themselves in all sort of deadly creatures. Basically, they act like parasites, attacking humans, animals and even machines and turning them into lethal killers.
+
+Your mission is to penetrate 8 alien infested areas, each one divided in 10 sub-zones, eliminate all enemies using your bombs and finally kick the Big Alien Boss back to where he came from.
+
+## How to play
 
 We provide BOOM standalones for each os in [github releases](https://github.com/raphaelreme/boomgame/releases). **NOTE: The standalone are built only for platform provided by github runners.**
 
-Try to download the executable that matches your platform (or the closest to it) and the game should run! (More details below)
+Try to download the executable that matches your platform (or the closest to it) and the game should run! (More details below).
 
-#### Linux
+We have also deployed the game online. You can therefore play BOOM on your web browser on [github.io](https://raphaelreme.github.io/boomgame/).
+
+### Online
+
+BOOM is compiled in web assembly so that you can play on any web browser on any platform. The game has been published on [github.io](https://raphaelreme.github.io/boomgame/). This feature is not very stable but seems to work pretty nicely most of the time. You may have to refresh the page several time. We advise to use Google Chrome browser (seems to be more stable with it).
+
+**NOTE: It may be slower on your browser than with a standalone**
+
+### Linux
 We provide a BOOM-ubuntu-$VERSION standalone that should work on matching ubuntu distributions (but hopefully on more linux ones, provided some default libs are here). Download the file, then make it executable (in a terminal):
 ```bash
 $ chmod +x BOOM-ubuntu-20.04  # May requires sudo rights
@@ -37,7 +51,7 @@ $ dpkg -i ./boom*.deb  # Requires sudo rights
 
 Then BOOM can be found in the search bar of you OS, and launched from there.
 
-#### MacOS
+### MacOS
 We provide a BOOM-macos-$VERSION.app standalone that should work on updated macos 11 and 12. (We are limited by github runners and have not worked yet to build the app on more diverse os). MacOs will probably stop you from executing the app (as it is not registered and correctly packaged regarding macos standards). To be able to run it, you have to overwrite macos warnings. **This is not a good practice and advise against it in general**, sadly this currently is our solution before working on macos packaging.
 
 You also may have to make the file executable (in a terminal):
@@ -45,14 +59,14 @@ You also may have to make the file executable (in a terminal):
 $ chmod +x BOOM-macos-11  # May requires sudo rights
 ```
 
-#### Windows
+### Windows
 We provide a BOOM-windows-$VERSION.exe standalone that should work on recent windows. Windows will probably stop you from downloading this executable (as we did not signed it, nor packaged it correctly yet), because it is dangerous to download random executable from the internet. To be able to download it and run it, you should overwrite windows warnings. **This is not a good practice and advise against it in general**, sadly this currently is our solution before working on windows packaging.
 
 
+## Install the python library (For developers)
 ### From pypi
-It requires to install python and pip first.
 
-To install the the game (will also install pygame), you can run:
+To install our python code, run:
 
 ```
 $ pip install boomgame
@@ -65,10 +79,9 @@ $ boom
 ```
 
 ### Build from source
-Download the source code. (+ Install python, pip and set up python environment)
+Download the source code.
 
 Run:
-
 ```
 $ pip install -r requirements-dev.txt
 ```
@@ -90,13 +103,6 @@ For linux, we also provide a way to build the .deb package with the `build.sh` s
 ```bash
 $ bash build.sh  # Will run pyinstaller and packaged the result in a .deb
 ```
-
-## Story
-It’s happened again. The Earth is facing a new alien threat and who’s called to save our beloved planet? You guessed!
-
-The aliens have the capability of transform themselves in all sort of deadly creatures. Basically, they act like parasites, attacking humans, animals and even machines and turning them into lethal killers.
-
-Your mission is to penetrate 8 alien infested areas, each one divided in 10 sub-zones, eliminate all enemies using your bombs and finally kick the Big Alien Boss back to where he came from.
 
 ## BUGS and missing features
 

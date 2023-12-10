@@ -1,5 +1,6 @@
 """Handle the sound of all the game"""
 
+from __future__ import annotations
 
 import pygame.mixer
 

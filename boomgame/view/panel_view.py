@@ -1,5 +1,7 @@
 """Display the left panel."""
 
+from __future__ import annotations
+
 from typing import Dict, Tuple
 
 import pygame

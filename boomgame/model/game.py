@@ -1,5 +1,7 @@
 """Model that handle data for the whole game"""
 
+from __future__ import annotations
+
 import enum
 import json
 from typing import Dict, List

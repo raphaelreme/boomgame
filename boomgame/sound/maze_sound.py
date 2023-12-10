@@ -1,5 +1,7 @@
 """Handle sound for a given maze"""
 
+from __future__ import annotations
+
 import pygame
 import pygame.mixer
 

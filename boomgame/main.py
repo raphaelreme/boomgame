@@ -1,5 +1,7 @@
 """Entry point of the game"""
 
+from __future__ import annotations
+
 import asyncio
 import enum
 from typing import Dict, Tuple

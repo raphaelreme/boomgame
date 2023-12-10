@@ -1,5 +1,7 @@
 """Main view of the game"""
 
+from __future__ import annotations
+
 from typing import Tuple
 import pygame
 import pygame.surface

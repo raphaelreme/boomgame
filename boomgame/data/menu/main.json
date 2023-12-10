@@ -98,7 +98,7 @@
                 10.0
             ],
             "text": "@QUIT",
-            "action": "quit"
+            "action": "quit_game"
         },
         {
             "element": "Image",

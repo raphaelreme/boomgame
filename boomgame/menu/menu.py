@@ -28,12 +28,12 @@ class Menu(view.View):
 
     SIZE = (15, 20)
 
-    actions: Dict[PageEnum, Dict[str, Callable[[element.Element], None]]] = {
-        PageEnum.MAIN: {
-            "new_game": actions.new_game,
-            "open_game": actions.open_game,
-            "quit": actions.quit_game,
-        },
+    actions: Dict[PageEnum, List[str]] = {
+        PageEnum.MAIN: [
+            "new_game",
+            "open_game",
+            "quit_game",
+        ],
     }
 
     def __init__(self, start_callback, quit_callback) -> None:
@@ -64,7 +64,9 @@ class Page(view.View):
         self.menu = menu
         self.page = page
         self.previous = previous
-        self.actions = self.menu.actions[self.page]
+        self.actions: Dict[str, Callable[[element.Element], None]] = {
+            action: getattr(actions, action) for action in self.menu.actions[self.page]
+        }
 
         resource = resources.joinpath("menu").joinpath(f"{page.value}.json")
         page_config = json.loads(resource.read_text())

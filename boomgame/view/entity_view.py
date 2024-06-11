@@ -305,7 +305,6 @@ class EnemyView(MovingEntityView):
         if isinstance(event_, events.MovedEntityEvent):
             if self.entity.firing_timer.is_active:
                 self.select_sprite(self.FIRING_ROW, self.direction_to_row[self.entity.current_direction])
-            return
 
     def display(self, surface: pygame.surface.Surface) -> None:
         if self.entity.is_alien:

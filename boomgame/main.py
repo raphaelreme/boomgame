@@ -109,6 +109,9 @@ class BoomGame(observer.Observer):
 
         # Draw on the real surface and inflate at maximum size
         surface = pygame.display.get_surface()
+        if surface is None:
+            raise RuntimeError("No active surface to draw on.")
+
         surface.fill((0, 0, 0))
 
         width, height = surface.get_size()

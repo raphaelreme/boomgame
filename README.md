@@ -66,7 +66,7 @@ We provide a BOOM-windows-$VERSION.exe standalone that should work on recent win
 ## Install the python library (For developers)
 ### From pypi
 
-To install our python code, run:
+To install boom from pypi with pip:
 
 ```
 $ pip install boomgame
@@ -75,21 +75,22 @@ $ pip install boomgame
 Once installed, the game can be launched with
 
 ```
-$ boom
+$ BOOM
 ```
 
 ### Build from source
-Download the source code.
+Download the source code and install from source:
 
-Run:
-```
-$ pip install -r requirements-dev.txt
+```bash
+git clone git@github.com:raphaelreme/boomgame.git  # OR https://github.com/raphaelreme/boomgame.git
+cd torch-kf
+pip install .
 ```
 
 Again, the game can be launched with
 
 ```
-$ boom
+$ BOOM
 ```
 
 You can now build the standalone on your platform, following:

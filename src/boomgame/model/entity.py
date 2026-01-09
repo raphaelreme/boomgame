@@ -1,20 +1,26 @@
 # pylint: disable=too-many-lines
 
-"""Provides classes for all entities of the game"""
+"""Provides classes for all entities of the game."""
 
 from __future__ import annotations
 
 import enum
 import math
 import random
-from typing import cast, Dict, List, Optional, Set, Tuple
+import sys
+from typing import ClassVar, cast
 
-from ..designpattern import observable
-from . import events, maze, timer, vector
+from boomgame.designpattern import observable
+from boomgame.model import events, maze, timer, vector
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
 class Score(enum.IntEnum):
-    """All available scores"""
+    """All available scores."""
 
     S0 = 0
     S10 = 10
@@ -35,12 +41,14 @@ class Score(enum.IntEnum):
 
 
 class Damage:
-    """Damage done to entities
+    """Damage done to entities.
 
     Two types: Damage from bombs. And damage from the enemies.
     """
 
     class Type(enum.Enum):
+        """Types of Damage."""
+
         ENEMIES = 0
         BOMBS = 1
 
@@ -60,13 +68,13 @@ class EntityClass(type):
     """
 
     REPR: str = ""
-    representation_to_entity_class: Dict[str, EntityClass] = {}
+    representation_to_entity_class: ClassVar[dict[str, EntityClass]] = {}
 
     def __init__(cls, cls_name: str, bases: tuple, attributes: dict) -> None:
         super().__init__(cls_name, bases, attributes)
 
         if cls.REPR:
-            if cls.REPR == " " or cls.REPR == "|" or len(cls.REPR) > 1:
+            if cls.REPR in {" ", "|"} or len(cls.REPR) > 1:
                 raise ValueError(
                     f"Invalid REPR attribute: {cls.REPR} of {cls}."
                     f"Should be a single char and not '{maze.Maze.VOID}' nor '{maze.Maze.SEP}'"
@@ -95,7 +103,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
     REPR: str = ""
     BASE_HEALTH = 0
     SIZE = (1.0, 1.0)
-    VULNERABILITIES: List[Damage.Type] = []
+    VULNERABILITIES: ClassVar[list[Damage.Type]] = []
     REMOVING_DELAY: float = 0
     SCORE = Score.S0
     SCORE_ON_REMOVE = False
@@ -115,10 +123,11 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self._size = vector.Vector(self.SIZE)
         self.removing_timer = timer.Timer(increase=False)
         self.colliding_rect: vector.Rect = self._build_colliding_rect(self.position, self.size)
-        self.score_collectors: Set[Player] = set()
+        self.score_collectors: set[Player] = set()
 
     @property
     def position(self) -> vector.Vector:
+        """Position of the Entity in the maze."""
         return self._position
 
     @position.setter
@@ -128,6 +137,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
     @property
     def size(self) -> vector.Vector:
+        """Size of the Entity (in Tile)."""
         return self._size
 
     @size.setter
@@ -137,7 +147,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
     @staticmethod
     def _build_colliding_rect(position: vector.Vector, size: vector.Vector) -> vector.Rect:
-        """Build the colliding rect of the entity
+        """Build the colliding rect of the entity.
 
         Given the current approach, the image size is a tuple of integer.
         Entity with a float size have an int size image centered on the entity.
@@ -161,6 +171,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
                 self.changed(events.RemovingEntityEvent(self))
 
     def hit(self, damage: Damage) -> bool:
+        """Handle the entity health when hit."""
         if self.removing_timer.is_active:
             return False
 
@@ -179,6 +190,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         return True
 
     def generate_score(self) -> None:
+        """Give score to players that are registered in `score_collectors`."""
         if not self.SCORE or not self.score_collectors:
             return
 
@@ -189,6 +201,7 @@ class Entity(observable.Observable, metaclass=EntityClass):
         self.maze.changed(events.ScoreEvent(self))
 
     def removing(self) -> None:
+        """Start removing the entity."""
         self.removing_timer.start(self.REMOVING_DELAY)
         self.changed(events.StartRemovingEvent(self))
 
@@ -196,51 +209,61 @@ class Entity(observable.Observable, metaclass=EntityClass):
             self.generate_score()
 
     def remove(self) -> None:
+        """Remove the entity;."""
         self.maze.remove_entity(self)
 
         if self.SCORE_ON_REMOVE:
             self.generate_score()
 
     def __repr__(self) -> str:
+        """String representation."""
         return f"{self.__class__.__name__} at {self.colliding_rect}"
 
 
 class Coin(Entity):
+    """Coin."""
+
     REPR = "C"
     REMOVING_DELAY = 1.5
     SCORE = Score.S150
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
         if not self.removing_timer.is_active:
             players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
             if players:
-                self.score_collectors = cast(Set[Player], players)
+                self.score_collectors = cast("set[Player]", players)
                 self.removing()
 
 
 class BreakableWall(Entity):
+    """A wall which can be broken with a bomb."""
+
     REPR = "B"
-    VULNERABILITIES = [Damage.Type.BOMBS]
+    VULNERABILITIES: ClassVar[list[Damage.Type]] = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.5
     SCORE = Score.S10
 
+    @override
     def remove(self) -> None:
         rand = random.random()
         if rand <= BonusClass.BONUS_RATE:
-            weights = list(map(lambda klass: klass.RATE, BonusClass.bonus_classes))
+            weights = [klass.RATE for klass in BonusClass.bonus_classes]
             klass = random.choices(BonusClass.bonus_classes, weights=weights, k=1)[0]
             self.maze.add_entity(klass(self.maze, self.position))
         super().remove()
 
 
 class SolidWall(Entity):
+    """A wall, which cannot be broken."""
+
     REPR = "S"
 
 
 class BreakableWallRemover(Entity):
-    """Fake entity that removes walls when a LightBoltBonus is caught"""
+    """Fake entity that removes walls when a LightBoltBonus is caught."""
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
@@ -251,6 +274,7 @@ class BreakableWallRemover(Entity):
 
         self.removed = 0
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -270,7 +294,9 @@ class BreakableWallRemover(Entity):
 
 
 class Bomb(Entity):
-    VULNERABILITIES = [Damage.Type.BOMBS]
+    """Bomb from a Player."""
+
+    VULNERABILITIES: ClassVar[list[Damage.Type]] = [Damage.Type.BOMBS]
     REMOVING_DELAY = 0.0
     BASE_TIMEOUT = 5.0
     FAST_TIMEOUT = 2.0
@@ -282,6 +308,7 @@ class Bomb(Entity):
         self.timer = timer.Timer(increase=False)
         self.timer.start(self.FAST_TIMEOUT if player.fast_bomb else self.BASE_TIMEOUT)
 
+    @override
     def update(self, delay: float) -> None:
         if self.removing_timer.is_active:
             super().update(delay)
@@ -294,6 +321,7 @@ class Bomb(Entity):
 
         self.changed(events.ForwardTimeEvent(delay))
 
+    @override
     def removing(self) -> None:
         super().removing()
 
@@ -302,9 +330,11 @@ class Bomb(Entity):
 
 
 class Laser(Entity):
-    """Laser entity created by a Bomb explosion"""
+    """Laser entity created by a Bomb explosion."""
 
     class Orientation(enum.Enum):
+        """Orientation for a Laser."""
+
         CENTER = 0
         VERTICAL = 1
         HORIZONTAL = 2
@@ -326,6 +356,7 @@ class Laser(Entity):
         self.damage = int(self.DAMAGE * strength)
         self.removing()
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -347,7 +378,7 @@ class Laser(Entity):
 
     @staticmethod
     def generate_from_bomb(bomb: Bomb) -> None:
-        """Generate laser at the center and then for each direction around the bomb
+        """Generate laser at the center and then for each direction around the bomb.
 
         Args:
             bomb (Bomb): Exploding bomb.
@@ -396,35 +427,35 @@ class MovingEntity(Entity):
     """
 
     BASE_SPEED = 4.0
-    BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall)
-    BOUNCE_ON: Tuple[EntityClass, ...] = ()
+    BLOCKED_BY: tuple[EntityClass, ...] = (SolidWall, BreakableWall)
+    BOUNCE_ON: tuple[EntityClass, ...] = ()
 
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
         self.speed = self.BASE_SPEED
-        self.current_direction: Optional[vector.Direction] = None
-        self.next_direction: Optional[vector.Direction] = None
+        self.current_direction: vector.Direction | None = None
+        self.next_direction: vector.Direction | None = None
 
         # Helper to keep a clean state
         # Not that position = (1 - step) * prev_position + step * next_position
         self.prev_position = self.position
-        self.next_position: Optional[vector.Vector] = None
+        self.next_position: vector.Vector | None = None
         self.try_moving_since = 0.0
         self.is_still_since = 0.0
         self.step = 0.0
 
-    def set_wanted_direction(self, direction: Optional[vector.Direction]) -> None:
+    def set_wanted_direction(self, direction: vector.Direction | None) -> None:
         """Set the direction the entity wants to go.
 
         If set during a current movement, the movement is first finished. Then the entity can change its direction
 
         Args:
-            direction (Optional, Direction): The next direction to follow. If None, the movement will be stopped
+            direction (Direction | None): The next direction to follow. If None, the movement will be stopped
         """
         self.next_direction = direction
 
     def _update_direction(self) -> None:
-        """Update the direction once a movement is done
+        """Update the direction once a movement is done.
 
         Called internally by `update`. The current direction can be updated from the next direction,
         or randomly or according to what happens in the maze (for instance for enemies)
@@ -433,14 +464,15 @@ class MovingEntity(Entity):
         """
         self.current_direction = self.next_direction
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
         if not self.removing_timer.is_active:
             self.move(delay)
 
-    def move(self, delay: float) -> None:  # pylint: disable=too-many-branches
-        """Update the position after a small delay
+    def move(self, delay: float) -> None:  # noqa: C901
+        """Update the position after a small delay.
 
         Args:
             delay (float): Time delay since last call.
@@ -476,10 +508,7 @@ class MovingEntity(Entity):
         self.position += self.current_direction.vector * step
         self.step += step
         if self.step >= 1:  # Has reached a new tile
-            if self.speed == 0:
-                remaining_delay = 0.0
-            else:
-                remaining_delay = (self.step - 1) / self.speed
+            remaining_delay = 0.0 if self.speed == 0 else (self.step - 1) / self.speed
 
             self.position = self.next_position
             self.step = 0
@@ -496,7 +525,7 @@ class MovingEntity(Entity):
             self.colliding_rect, lambda entity: isinstance(entity, self.BOUNCE_ON) and entity is not self
         )
         if len(colliding_entities) > 1:
-            print("WARNING: More than one entites colliding at once")
+            print("WARNING: More than one entites colliding at once")  # noqa: T201
 
         if colliding_entities:
             self.position -= self.current_direction.vector * step
@@ -507,14 +536,14 @@ class MovingEntity(Entity):
         self.changed(events.MovedEntityEvent(self))
 
     def teleport(self) -> bool:
-        """Try to teleport the entity"""
+        """Try to teleport the entity."""
         assert self.position.int_part() == self.position
 
         for teleporter in self.maze.entities:
             if not isinstance(teleporter, Teleporter):
                 continue
 
-            if not teleporter.position == self.position:
+            if teleporter.position != self.position:
                 continue
 
             next_teleporter = teleporter.next_teleporter
@@ -539,7 +568,9 @@ class MovingEntity(Entity):
             self.step = 1 - self.step
 
     def _valid_next_direction(self, next_direction: vector.Direction) -> bool:
-        """A direction is valid:
+        """Check next direction validity.
+
+        A direction is valid if:
         - It leads to a position inside the maze
         - There is no blocking entities on the path
         - The entity won't bonce immediately
@@ -556,11 +587,11 @@ class MovingEntity(Entity):
             rect, lambda entity: isinstance(entity, self.BOUNCE_ON) and entity != self
         )
 
-        return valid
+        return valid  # noqa: RET504
 
 
 class Teleporter(Entity):
-    """Teleports moving entities in the maze"""
+    """Teleports moving entities in the maze."""
 
     REPR = "T"
     RELOADING_DELAY = 0.8  # When reloading, nothing can go out of it (But you can still go in)
@@ -569,14 +600,15 @@ class Teleporter(Entity):
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
         self._in_next_teleporter = False
-        self._next_teleporter: Optional[Teleporter] = None
+        self._next_teleporter: Teleporter | None = None
         self.reload_timer = timer.Timer(increase=False)
 
         self.alive_since = timer.Timer()
         self.alive_since.start(100)
 
     @property
-    def next_teleporter(self) -> Optional[Teleporter]:
+    def next_teleporter(self) -> Teleporter | None:
+        """The next available Teleporter."""
         if self._in_next_teleporter:
             return None
 
@@ -599,14 +631,13 @@ class Teleporter(Entity):
         self._next_teleporter = teleporter
 
     def is_available(self) -> bool:
+        """Check if the Teleporter can be used."""
         if self.reload_timer.is_active:
             return False
 
-        if self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, self.BLOCKED_BY)):
-            return False
+        return not self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, self.BLOCKED_BY))
 
-        return True
-
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -622,13 +653,14 @@ class Teleporter(Entity):
             self.changed(events.ForwardTimeEvent(delay))
 
     def teleport(self):
+        """Handle an Entity teleportation."""
         self.maze.add_entity(Flash(self.maze, self.position))
         self.reload_timer.reset()
         self.reload_timer.start(self.RELOADING_DELAY)
 
 
 class Flash(Entity):
-    """Flash of entities teleporting in the game"""
+    """Flash of entities teleporting in the game."""
 
     REMOVING_DELAY = 0.3
 
@@ -664,7 +696,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
     # Players are added to a maze by the game itself
 
     REMOVING_DELAY = 5.0
-    VULNERABILITIES = [Damage.Type.BOMBS, Damage.Type.ENEMIES]
+    VULNERABILITIES: ClassVar[list[Damage.Type]] = [Damage.Type.BOMBS, Damage.Type.ENEMIES]
     BASE_HEALTH = 16
     BASE_LIFE = 3
     BASE_BOMB_CAPACITY = 5
@@ -693,7 +725,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         self.extra = [False] * 5
 
     def reset(self) -> None:
-        """Reset the player when changing of maze"""
+        """Reset the player when changing of maze."""
         super().reset()  # Drop links to the observers so that they can be garbage collected
 
         # Player related
@@ -711,7 +743,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         self.try_moving_since = 0.0
 
     def new_life(self) -> None:
-        """Reset some stuff when a player loses a life"""
+        """Reset some stuff when a player loses a life."""
         self.health = self.BASE_HEALTH
         self.speed = self.BASE_SPEED
         self.bomb_capacity = self.BASE_BOMB_CAPACITY
@@ -723,6 +755,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
 
         self.removing_timer.reset()
 
+    @override
     def remove(self) -> None:
         self.life -= 1
         if not self.life:
@@ -744,6 +777,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         self.reset()
 
     def bombs(self) -> None:
+        """Drop a bomb."""
         if self.removing_timer.is_active:
             return
 
@@ -753,11 +787,13 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         if self.bomb_timer.is_active:
             return
 
-        if 0.6 < self.step < 0.8:
+        mid_low, mid_high = 0.6, 0.8  # Do not drop bombs in between TILES.
+
+        if mid_low < self.step < mid_high:
             return
 
         bomb_position = self.prev_position
-        if self.next_position and self.step >= 0.8:
+        if self.next_position and self.step >= mid_high:
             bomb_position = self.next_position
 
         if self.maze.get_collision(
@@ -770,20 +806,24 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
         self.bomb_timer.start(self.BOMBING_DELAY)
 
     def bomb_explodes(self) -> None:
+        """Free bomb count, allowing to drop an additional bomb."""
         self.bomb_count -= 1
 
     def add_letter(self, letter_id: int) -> None:
+        """EXTRA handling."""
         self.extra[letter_id] = True
-        if sum(self.extra) == 5:
+        if all(self.extra):
             self.extra = [False] * 5
             self.life += 1
             self.maze.changed(events.ExtraLifeEvent(self))
         self.changed(events.PlayerDetailsEvent(self))
 
     def add_score(self, score: Score) -> None:
+        """Increase score."""
         self.score += score
         self.changed(events.PlayerDetailsEvent(self))
 
+    @override
     def hit(self, damage: Damage) -> bool:
         if self.shield.is_active:
             return False
@@ -797,6 +837,7 @@ class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
 
         return True
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -824,11 +865,11 @@ class Enemy(MovingEntity):
 
     REMOVING_DELAY = 2.0
     BASE_SPEED = 2.0
-    VULNERABILITIES = [Damage.Type.BOMBS]
+    VULNERABILITIES: ClassVar[list[Damage.Type]] = [Damage.Type.BOMBS]
     ERRATIC = False  # Can randomly turn around
     CHASE = False  # Chase the player
     DAMAGE = 1
-    BULLET_CLASS: Optional[EntityClass] = None
+    BULLET_CLASS: EntityClass | None = None
     FIRING_DELAY = 0.15
     RELOADING_DELAY = 1.0
     MIN_YELL_DELAY = 7.0  # Minimum delay between two NoiseEvent
@@ -844,10 +885,11 @@ class Enemy(MovingEntity):
         self.is_alien = False
 
     def _update_direction(self) -> None:
-        plausible_directions = []
-        for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]:
-            if self._valid_next_direction(direction):
-                plausible_directions.append(direction)
+        plausible_directions = [
+            direction
+            for direction in [vector.Direction.DOWN, vector.Direction.UP, vector.Direction.LEFT, vector.Direction.RIGHT]
+            if self._valid_next_direction(direction)
+        ]
 
         if not plausible_directions:
             return
@@ -857,20 +899,17 @@ class Enemy(MovingEntity):
             best_distance = None
             for direction in plausible_directions:
                 player_distance = self._check_player_on(direction)
-                if player_distance is not None:
-                    if best_distance is None or best_distance > player_distance:
-                        best_distance = player_distance
-                        best_direction = direction
+                if player_distance is not None and (best_distance is None or best_distance > player_distance):
+                    best_distance = player_distance
+                    best_direction = direction
 
             if best_direction and best_distance != 0:  # < 1 ?
                 self.current_direction = best_direction
                 return
 
-        opposite_direction: Optional[vector.Direction]
-        if self.current_direction:
-            opposite_direction = vector.Direction.get_opposite_direction(self.current_direction)
-        else:
-            opposite_direction = None
+        opposite_direction = (
+            vector.Direction.get_opposite_direction(self.current_direction) if self.current_direction else None
+        )
 
         if not self.ERRATIC and opposite_direction in plausible_directions and len(plausible_directions) > 1:
             plausible_directions.remove(opposite_direction)
@@ -885,7 +924,7 @@ class Enemy(MovingEntity):
         self.fast = True
 
     def extra_game(self, active: bool) -> None:
-        """Called to activate or deactivate extra game
+        """Called to activate or deactivate extra game.
 
         Args:
             active (bool): Whether to activate or deactivate the alien mode
@@ -895,6 +934,7 @@ class Enemy(MovingEntity):
         self.reload_timer.reset()
         self.speed = self.BASE_SPEED
 
+    @override
     def update(self, delay: float) -> None:
         if self.fast and not self.removing_timer.is_active:
             delay *= 2  # Twice faster for everything
@@ -925,8 +965,8 @@ class Enemy(MovingEntity):
             if distance is not None and not self.reload_timer.is_active:
                 self.attack(distance)
 
-    def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
-        """Check if there is a player on the given direction
+    def _check_player_on(self, direction: vector.Direction) -> float | None:
+        """Check if there is a player on the given direction.
 
         Args:
             direction (vector.Direction): Direction to check
@@ -942,10 +982,9 @@ class Enemy(MovingEntity):
         while not player and self.maze.is_inside(rect):
             distance += 1
             for entity in self.maze.get_collision(rect):
-                if isinstance(entity, Player):
-                    if not entity.removing_timer.is_active:
-                        player = entity
-                        break
+                if isinstance(entity, Player) and not entity.removing_timer.is_active:
+                    player = entity
+                    break
                 if isinstance(entity, (SolidWall, BreakableWall)):
                     return None
 
@@ -960,12 +999,10 @@ class Enemy(MovingEntity):
 
         # When the distance is 0, we have to be more precise
         true_direction = player.position - self.position  # Direction to follow to match the player position
-        distance = -sum(true_direction * direction.vector)  # < 0 if the direction match
-
-        return distance
+        return -sum(true_direction * direction.vector)  # < 0 if the direction match
 
     def attack(self, _distance: float) -> None:
-        """Attack a player at a given distance
+        """Attack a player at a given distance.
 
         Default behavior: Shot a bullet in the current direction
 
@@ -976,17 +1013,19 @@ class Enemy(MovingEntity):
             return
 
         direction = self.current_direction if self.current_direction else vector.Direction.DOWN
-        self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))  # pylint: disable=no-member,not-callable
+        self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))
         self.firing_timer.reset()
         self.firing_timer.start(self.FIRING_DELAY)
         self.reload_timer.start(self.RELOADING_DELAY)
         self.speed = 0
 
     def yell(self):
+        """Generate noise randomly."""
         self.changed(events.NoiseEvent(self))
         self.noise_timer.reset()
         self.noise_timer.start(random.uniform(self.MIN_YELL_DELAY, self.MAX_YELL_DELAY))
 
+    @override
     def remove(self) -> None:
         super().remove()
         if self.is_alien:
@@ -997,13 +1036,18 @@ class Enemy(MovingEntity):
 Enemy.BOUNCE_ON = (Enemy,)
 
 
+# TODO: Build more precise docstring for Enemy?
 class Soldier(Enemy):
+    """Soldier."""
+
     REPR = "0"
     ERRATIC = True
     SCORE = Score.S200
 
 
 class Sarge(Enemy):
+    """Sarge."""
+
     REPR = "1"
     ERRATIC = True
     RELOADING_DELAY = 0.75
@@ -1011,6 +1055,8 @@ class Sarge(Enemy):
 
 
 class Lizzy(Enemy):
+    """Lizzy."""
+
     REPR = "2"
     FIRING_DELAY = 0.2
     RELOADING_DELAY = 1.0
@@ -1018,6 +1064,8 @@ class Lizzy(Enemy):
 
 
 class Taur(Enemy):
+    """Taur."""
+
     REPR = "3"
     BASE_SPEED = 4.0
     CHASE = True
@@ -1028,21 +1076,21 @@ class Taur(Enemy):
     MAX_YELL_DELAY = 999999
     SCORE = Score.S500
 
-    def _check_player_on(self, direction: vector.Direction) -> Optional[float]:
+    def _check_player_on(self, direction: vector.Direction) -> float | None:
         distance = super()._check_player_on(direction)
         if distance is None or distance > 1:
             return None
 
         # Follow more, a bit too hard
         # if distance < 1:
-        #     return distance
+        #     return distance  # noqa: ERA001
 
-        if self.current_direction:
-            if direction == vector.Direction.get_opposite_direction(self.current_direction):
-                return None
+        if self.current_direction and direction == vector.Direction.get_opposite_direction(self.current_direction):
+            return None
 
         return distance
 
+    @override
     def attack(self, distance: float) -> None:
         if distance >= 1:
             return
@@ -1057,12 +1105,16 @@ class Taur(Enemy):
 
 
 class Gunner(Enemy):
+    """Gunner."""
+
     REPR = "4"
     RELOADING_DELAY = 0.125
     SCORE = Score.S600
 
 
 class Thing(Enemy):
+    """Thing."""
+
     REPR = "5"
     CHASE = True
     DAMAGE = 2
@@ -1071,6 +1123,8 @@ class Thing(Enemy):
 
 
 class Ghost(Enemy):
+    """Ghost."""
+
     REPR = "6"
     CHASE = True
     DAMAGE = 2
@@ -1081,6 +1135,7 @@ class Ghost(Enemy):
     MAX_YELL_DELAY = 999999
     SCORE = Score.S800
 
+    @override
     def attack(self, _distance: float) -> None:
         assert self.current_direction
 
@@ -1108,6 +1163,7 @@ class Ghost(Enemy):
 
         super()._update_direction()
 
+    @override
     def teleport(self) -> bool:
         if super().teleport():
             self.firing_timer.reset()
@@ -1117,6 +1173,8 @@ class Ghost(Enemy):
 
 
 class Smoulder(Enemy):
+    """Smoulder."""
+
     REPR = "7"
     CHASE = True
     DAMAGE = 2
@@ -1124,12 +1182,15 @@ class Smoulder(Enemy):
     RELOADING_DELAY = 0.2
     SCORE = Score.S900
 
+    @override
     def attack(self, distance: float) -> None:
         if distance <= Flame.RANGE:
             super().attack(distance)
 
 
 class Skully(Enemy):
+    """Skully."""
+
     REPR = "8"
     CHASE = True
     DAMAGE = 2
@@ -1138,6 +1199,8 @@ class Skully(Enemy):
 
 
 class Giggler(Enemy):
+    """Giggler."""
+
     REPR = "9"
     BASE_SPEED = 4.0
     CHASE = True
@@ -1148,7 +1211,7 @@ class Giggler(Enemy):
 
 
 class Head(Enemy):
-    """Head Boss
+    """Head Boss.
 
     Very specific enemy that does not move.
     """
@@ -1171,11 +1234,12 @@ class Head(Enemy):
     def __init__(self, maze_: maze.Maze, position: vector.Vector) -> None:
         super().__init__(maze_, position)
 
-        self.hit_by: Set[Laser] = set()  # Hit once by each laser
-        self.left_eye_position = self.position + (0.7, 0.6)
-        self.right_eye_position = self.position + (0.7, 1.4)
+        self.hit_by: set[Laser] = set()  # Hit once by each laser
+        self.left_eye_position = self.position + (0.7, 0.6)  # noqa: RUF005
+        self.right_eye_position = self.position + (0.7, 1.4)  # noqa: RUF005
         self.reload_timer.start(self.RELOADING_DELAY)
 
+    @override
     def hit(self, damage: Damage) -> bool:
         if not isinstance(damage.entity, Laser):
             return False
@@ -1187,9 +1251,11 @@ class Head(Enemy):
         self.yell()
         return super().hit(damage)
 
+    @override
     def extra_game(self, active: bool) -> None:
         pass  # Never an alien
 
+    @override
     def update(self, delay: float) -> None:
         Entity.update(self, delay)  # Don't call neither Enemy nor MovingEntity update
 
@@ -1209,12 +1275,11 @@ class Head(Enemy):
         if self.reload_timer.update(delay):
             self.reload_timer.reset()
 
-        if self.firing_timer.is_active:
-            if (
-                self.firing_timer.current > self.firing_timer.total / 2
-                and self.firing_timer.current - delay < self.firing_timer.total / 2
-            ):
-                self.attack(0.0)
+        if self.firing_timer.is_active and (
+            self.firing_timer.current > self.firing_timer.total / 2
+            and self.firing_timer.current - delay < self.firing_timer.total / 2
+        ):
+            self.attack(0.0)
 
         if not self.reload_timer.is_active:
             self.reload_timer.start(self.RELOADING_DELAY)
@@ -1222,6 +1287,7 @@ class Head(Enemy):
             self.firing_timer.start(self.FIRING_DELAY)
             self.attack(0.0)
 
+    @override
     def attack(self, distance: float) -> None:
         assert self.BULLET_CLASS
 
@@ -1252,7 +1318,7 @@ class Bullet(Entity):
 
     REMOVING_DELAY = 0.25
     BASE_SPEED = 5.0
-    BLOCKED_BY: Tuple[EntityClass, ...] = (SolidWall, BreakableWall, Enemy, Player)
+    BLOCKED_BY: tuple[EntityClass, ...] = (SolidWall, BreakableWall, Enemy, Player)
     DAMAGE = 1
     RANGE = float("inf")
 
@@ -1267,6 +1333,7 @@ class Bullet(Entity):
         self.distance = 0.0
         self.blocked = False
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -1296,6 +1363,8 @@ class Bullet(Entity):
 
 
 class Shot(Bullet):
+    """Shot."""
+
     BASE_SPEED = 5.0
     DAMAGE = 1
     SIZE = (0.25, 0.25)
@@ -1306,6 +1375,8 @@ Sarge.BULLET_CLASS = Shot
 
 
 class Fireball(Bullet):
+    """Fireball."""
+
     BASE_SPEED = 4.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
@@ -1315,6 +1386,8 @@ Lizzy.BULLET_CLASS = Fireball
 
 
 class MGShot(Bullet):
+    """MGShot."""
+
     BASE_SPEED = 7.0
     DAMAGE = 1
     SIZE = (0.3, 0.3)
@@ -1324,6 +1397,8 @@ Gunner.BULLET_CLASS = MGShot
 
 
 class Lightbolt(Bullet):
+    """Lightbolt."""
+
     BASE_SPEED = 5.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
@@ -1333,12 +1408,15 @@ Thing.BULLET_CLASS = Lightbolt
 
 
 class Flame(Bullet):
+    """Flame."""
+
     REMOVING_DELAY = 0.5
     BASE_SPEED = 3.0
     DAMAGE = 2
     SIZE = (0.4, 0.4)
     RANGE = 3.5
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -1356,6 +1434,8 @@ Smoulder.BULLET_CLASS = Flame
 
 
 class Plasma(Bullet):
+    """Plasma."""
+
     BASE_SPEED = 7.0
     DAMAGE = 3
     SIZE = (0.4, 0.4)
@@ -1365,6 +1445,8 @@ Skully.BULLET_CLASS = Plasma
 
 
 class Magma(Bullet):
+    """Magma."""
+
     BASE_SPEED = 5.0
     DAMAGE = 4
     SIZE = (0.8, 0.8)
@@ -1374,6 +1456,8 @@ Giggler.BULLET_CLASS = Magma
 
 
 class Missile(Bullet):
+    """Missile."""
+
     BLOCKED_BY = (Enemy, Player)
     BASE_SPEED = 3.5
     DAMAGE = 4
@@ -1385,6 +1469,7 @@ class Missile(Bullet):
         self.alive_since = timer.Timer()
         self.alive_since.start(100)
 
+    @override
     def update(self, delay: float) -> None:
         self.alive_since.update(delay)
         super().update(delay)
@@ -1394,7 +1479,9 @@ Head.BULLET_CLASS = Missile
 
 
 class BonusClass(EntityClass):
-    bonus_classes: List[BonusClass] = []
+    """Bonus Metaclass."""
+
+    bonus_classes: ClassVar[list[BonusClass]] = []
     BONUS_RATE = 0.1
     RATE = 0.0
 
@@ -1405,7 +1492,7 @@ class BonusClass(EntityClass):
 
 
 class Bonus(Entity, metaclass=BonusClass):
-    """Base class for Bonus"""
+    """Base class for Bonus."""
 
     RATE = 0.0
     DELAY = 7.0
@@ -1419,11 +1506,12 @@ class Bonus(Entity, metaclass=BonusClass):
         self.timer.start(self.DELAY)
 
     def catch(self, player: Player) -> None:
-        """Called when a player catches a bonus"""
+        """Called when a player catches a bonus."""
         self.changed(events.NoiseEvent(self))
         self.score_collectors.add(player)
         self.remove()
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
@@ -1433,14 +1521,15 @@ class Bonus(Entity, metaclass=BonusClass):
 
         players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
         if players:
-            self.catch(cast(Player, players.pop()))
+            self.catch(cast("Player", players.pop()))
 
 
 class LightboltBonus(Bonus):
-    """Remove all the breakable walls"""
+    """Remove all the breakable walls."""
 
     RATE = 0.05
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         remover = BreakableWallRemover(self.maze, self.position)
@@ -1449,25 +1538,26 @@ class LightboltBonus(Bonus):
 
 
 class SkullBonus(Bonus):
-    """Kill all enemies"""
+    """Kill all enemies."""
 
     RATE = 0.03
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         for entity in self.maze.entities:
-            if isinstance(entity, Enemy):
-                if not entity.removing_timer.is_active:
-                    entity.score_collectors.add(player)
-                    entity.removing()
+            if isinstance(entity, Enemy) and not entity.removing_timer.is_active:
+                entity.score_collectors.add(player)
+                entity.removing()
 
 
 class BombCapacityBonus(Bonus):
-    """Increase bomb capacity"""
+    """Increase bomb capacity."""
 
     RATE = 0.15
     MAX_CAPACITY = 8
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         if player.bomb_capacity < self.MAX_CAPACITY:
@@ -1476,10 +1566,11 @@ class BombCapacityBonus(Bonus):
 
 
 class FastBombBonus(Bonus):
-    """Increase bomb speed"""
+    """Increase bomb speed."""
 
     RATE = 0.1
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         if not player.fast_bomb:
@@ -1488,11 +1579,12 @@ class FastBombBonus(Bonus):
 
 
 class BombRadiusBonus(Bonus):
-    """Increase bomb radius"""
+    """Increase bomb radius."""
 
     RATE = 0.15
     MAX_RADIUS = 4
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         if player.bomb_radius < self.MAX_RADIUS:
@@ -1501,10 +1593,11 @@ class BombRadiusBonus(Bonus):
 
 
 class HeartBonus(Bonus):
-    """Heal the player of 1 heart"""
+    """Heal the player of 1 heart."""
 
     RATE = 0.15
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         if player.health < Player.BASE_HEALTH:
@@ -1513,10 +1606,11 @@ class HeartBonus(Bonus):
 
 
 class FullHeartBonus(Bonus):
-    """Heal fully the player"""
+    """Heal fully the player."""
 
     RATE = 0.1
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         if player.health < Player.BASE_HEALTH:
@@ -1525,11 +1619,12 @@ class FullHeartBonus(Bonus):
 
 
 class ShieldBonus(Bonus):
-    """Shield the player"""
+    """Shield the player."""
 
     RATE = 0.15
     SHIELD_DELAY = 23.0
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         player.shield.reset()
@@ -1538,11 +1633,12 @@ class ShieldBonus(Bonus):
 
 
 class FastBonus(Bonus):
-    """Increase player speed"""
+    """Increase player speed."""
 
     RATE = 0.15
     FAST_DELAY = 20.0
 
+    @override
     def catch(self, player: Player) -> None:
         super().catch(player)
         player.fast.reset()
@@ -1552,7 +1648,7 @@ class FastBonus(Bonus):
 
 
 class ExtraLetter(Entity):
-    """Extra Letter dropped by aliens"""
+    """Extra Letter dropped by aliens."""
 
     LETTER_DELAY = 2.0
     SCORE = Score.S100
@@ -1565,17 +1661,19 @@ class ExtraLetter(Entity):
         self.letter_timer.start(self.LETTER_DELAY)
 
     def catch(self, player: Player) -> None:
+        """Called when a player catches the letter."""
         self.changed(events.NoiseEvent(self))
         player.add_letter(self.letter_id)
         self.score_collectors.add(player)
         self.remove()
 
+    @override
     def update(self, delay: float) -> None:
         super().update(delay)
 
         players = self.maze.get_collision(self.colliding_rect, lambda entity: isinstance(entity, Player))
         if players:
-            self.catch(cast(Player, players.pop()))
+            self.catch(cast("Player", players.pop()))
             return
 
         if self.letter_timer.update(delay):

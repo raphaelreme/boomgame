@@ -6,22 +6,23 @@ It holds all the data of current level.
 from __future__ import annotations
 
 import enum
-from typing import Callable, Dict, List, Optional, Set, Tuple
+import pathlib
+from typing import Callable, ClassVar
 
-from ..designpattern import observable
-from . import entity, events, timer, vector
-
-
-class MazeException(Exception):
-    pass
+from boomgame.designpattern import observable
+from boomgame.model import entity, events, timer, vector
 
 
-class OutOfMazeError(MazeException):
-    pass
+class MazeError(Exception):
+    """General maze error."""
 
 
-class MazeDescriptionError(MazeException):
-    pass
+class OutOfMazeError(MazeError):
+    """Unused: To be removed?"""
+
+
+class MazeDescriptionError(MazeError):
+    """Maze parsing error."""
 
 
 class Maze(observable.Observable):
@@ -40,24 +41,26 @@ class Maze(observable.Observable):
     """
 
     class State(enum.Enum):
+        """State of the Maze."""
+
         RUNNING = 0
         FAILED = 1
         SOLVED = 2
 
     SEP = "|"
     VOID = " "
-    PLAYER_SPAWNS = {"X": 1, "Y": 2}
+    PLAYER_SPAWNS: ClassVar[dict[str, int]] = {"X": 1, "Y": 2}
     END_DELAY = 2.0
     GAME_OVER_DELAY = 4.0
     EXTRA_GAME_DELAY = 30.0
     HURRY_UP_DELAY = 30.0
 
-    def __init__(self, size: Tuple[int, int]) -> None:
+    def __init__(self, size: tuple[int, int]) -> None:
         super().__init__()
         self.size = size
         self.state = Maze.State.RUNNING
-        self.entities: Set[entity.Entity] = set()
-        self.player_spawns: Dict[int, vector.Vector] = {}
+        self.entities: set[entity.Entity] = set()
+        self.player_spawns: dict[int, vector.Vector] = {}
         self.end_timer = timer.Timer()
         self.extra_game_timer = timer.Timer()
         self.hurry_up_timer = timer.Timer()
@@ -71,13 +74,13 @@ class Maze(observable.Observable):
             entity_ (entity.Entity): The entity to register.
         """
         if not self.is_inside(entity_.colliding_rect):
-            print(f"Warning: Try to add {entity_}. Out of boundaries: {self.size}")
+            print(f"Warning: Try to add {entity_}. Out of boundaries: {self.size}")  # noqa: T201
 
         self.entities.add(entity_)
         self.changed(events.NewEntityEvent(entity_))
 
     def remove_entity(self, entity_: entity.Entity) -> None:
-        """Remove an entity from the maze
+        """Remove an entity from the maze.
 
         Args:
             entity_ (entity.Entity): The entity to remove
@@ -100,12 +103,12 @@ class Maze(observable.Observable):
         self.add_entity(entity.Flash(self, player.position))
 
     def get_collision(
-        self, rect: vector.Rect, condition: Optional[Callable[[entity.Entity], bool]] = None
-    ) -> Set[entity.Entity]:
-        """Get the overlapping entities
+        self, rect: vector.Rect, condition: Callable[[entity.Entity], bool] | None = None
+    ) -> set[entity.Entity]:
+        """Get the overlapping entities.
 
         Args:
-            entity_ (vector.Rect): A rect to look at
+            rect (vector.Rect): A rect to look at
             condition (Callable): A filter to apply on each entity
 
         Returns:
@@ -120,7 +123,7 @@ class Maze(observable.Observable):
         return colliding_entities
 
     def is_inside(self, rect: vector.Rect) -> bool:
-        """Check that the rect belongs to the maze
+        """Check that the rect belongs to the maze.
 
         Args:
             rect (vector.Rect): Rect in the maze
@@ -139,12 +142,12 @@ class Maze(observable.Observable):
         return len(list(filter(lambda entity_: isinstance(entity_, entity.Player), self.entities)))
 
     def hurry_up(self) -> None:
-        """Called by the game when the time is almost up"""
+        """Called by the game when the time is almost up."""
         if not self.hurry_up_timer.is_active:
             self.hurry_up_timer.start(self.HURRY_UP_DELAY)
             self.changed(events.HurryUpEvent())
 
-    def update(self, delay: float) -> None:  # pylint: disable=too-many-branches
+    def update(self, delay: float) -> None:  # noqa: C901, PLR0912
         """Handle time forwarding.
 
         Args:
@@ -173,7 +176,7 @@ class Maze(observable.Observable):
         # XXX: The state cannot change even if a player bombs itself during the end timer
         if self.end_timer.is_active:
             self.end_timer.update(delay)
-            # self.changed(events.MazeEndingEvent())
+            # self.changed(events.MazeEndingEvent())  # noqa: ERA001
             return
 
         players, enemies, coins = 0, 0, 0
@@ -182,9 +185,8 @@ class Maze(observable.Observable):
                 players += 1
             if isinstance(entity_, entity.Enemy):
                 enemies += 1
-            if isinstance(entity_, entity.Coin):
-                if not entity_.removing_timer.is_active:
-                    coins += 1
+            if isinstance(entity_, entity.Coin) and not entity_.removing_timer.is_active:
+                coins += 1
 
         if not players:
             self.state = Maze.State.FAILED
@@ -198,16 +200,15 @@ class Maze(observable.Observable):
             self.changed(events.MazeSolvedEvent())
             return
 
-        if not coins:
-            if not self.extra_game_timer.is_active:
-                self.extra_game_timer.start(self.EXTRA_GAME_DELAY)
-                self.changed(events.ExtraGameEvent())
-                for entity_ in self.entities:
-                    if isinstance(entity_, entity.Enemy):
-                        if not entity_.removing_timer.is_active:
-                            entity_.extra_game(True)
+        if not coins and not self.extra_game_timer.is_active:
+            self.extra_game_timer.start(self.EXTRA_GAME_DELAY)
+            self.changed(events.ExtraGameEvent())
+            for entity_ in self.entities:
+                if isinstance(entity_, entity.Enemy) and not entity_.removing_timer.is_active:
+                    entity_.extra_game(True)
 
     def __str__(self) -> str:
+        """Convert maze to string."""
         identifier_to_repr = {i: r for r, i in Maze.PLAYER_SPAWNS.items()}
 
         static_repr = [[Maze.VOID for _ in range(self.size[1])] for _ in range(self.size[0])]
@@ -233,19 +234,21 @@ class Maze(observable.Observable):
         return "\n".join(map(Maze.SEP.join, static_repr))
 
     def serialize(self) -> str:
+        """Convert maze to string."""
         return str(self)
 
     @staticmethod
-    def unserialize(string: str) -> Maze:  # pylint: disable=too-many-locals
+    def unserialize(string: str) -> Maze:  # noqa: C901
+        """Parse maze from string."""
         lines = string.split("\n")
-        matrix = list(map(lambda line: line.split(Maze.SEP), lines))
+        matrix = [line.split(Maze.SEP) for line in lines]
 
         rows = len(matrix)
         columns = len(matrix[0])
         maze = Maze((rows, columns))
         has_coin = False
 
-        teleporters: List[entity.Teleporter] = []
+        teleporters: list[entity.Teleporter] = []
 
         for i, line in enumerate(matrix):
             if len(line) != columns:
@@ -260,7 +263,7 @@ class Maze(observable.Observable):
                     maze.player_spawns[identifier] = vector.Vector((float(i), float(j)))
                     continue
 
-                klass: Optional[entity.EntityClass] = entity.EntityClass.representation_to_entity_class.get(char)
+                klass = entity.EntityClass.representation_to_entity_class.get(char)
 
                 if not klass:
                     raise MazeDescriptionError(f"Unknown identifier: '{char}' at {(i, j)}")
@@ -283,10 +286,10 @@ class Maze(observable.Observable):
         return maze
 
     def save(self, file_name: str) -> None:
-        with open(file_name, "w") as file:
-            file.write(self.serialize())
+        """Save Maze in the given file."""
+        pathlib.Path(file_name).write_text(self.serialize())
 
     @staticmethod
     def read(file_name: str) -> Maze:
-        with open(file_name, "r") as file:
-            return Maze.unserialize(file.read())
+        """Read and parse the Maze in the given file."""
+        return Maze.unserialize(pathlib.Path(file_name).read_text())

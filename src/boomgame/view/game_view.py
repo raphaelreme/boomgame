@@ -1,17 +1,26 @@
-"""Main view of the game"""
+"""Main view of the game."""
 
 from __future__ import annotations
 
-from typing import Tuple
+import sys
+from typing import TYPE_CHECKING
+
 import pygame
-import pygame.surface
 import pygame.rect
+import pygame.surface
 import pygame.transform
 
-from ..designpattern import event, observer
-from ..model import game, events
-from . import inflate_to_reality
-from . import maze_view, panel_view, view
+from boomgame.designpattern import observer
+from boomgame.model import events, game
+from boomgame.view import inflate_to_reality, maze_view, panel_view, view
+
+if TYPE_CHECKING:
+    from boomgame.designpattern import event
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
 class GameView(view.View, observer.Observer):
@@ -28,7 +37,7 @@ class GameView(view.View, observer.Observer):
         self.build_subviews()
 
     def build_subviews(self):
-        """Build all the subviews suited for the current maze"""
+        """Build all the subviews suited for the current maze."""
         self.panel_view = panel_view.PanelView(self.model)
         self.maze_view = maze_view.MazeView(self.model.maze, self.model.style)
         self.size = (self.panel_view.size[0] + self.maze_view.size[0], self.maze_view.size[1])
@@ -39,6 +48,7 @@ class GameView(view.View, observer.Observer):
         self.start_text = CenteredText(self.maze_rect.size)
         self.bonus_text = CenteredText(self.maze_rect.size)
 
+    @override
     def notify(self, event_: event.Event) -> None:
         if isinstance(event_, events.MazeStartEvent):
             pass
@@ -51,6 +61,7 @@ class GameView(view.View, observer.Observer):
             time = max(0, self.model.time)
             self.bonus_text.set_text(f"TIME BONUS!\n{int(time * 10)}")
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         if self.model.state == game.GameModel.State.MENU:
             return
@@ -82,11 +93,11 @@ class GameView(view.View, observer.Observer):
 
 
 class CenteredText(view.View):
-    """Display some text"""
+    """Display some text."""
 
     FONT_SIZE = 1
 
-    def __init__(self, size: Tuple[int, int]) -> None:
+    def __init__(self, size: tuple[int, int]) -> None:
         super().__init__((0, 0), size)
 
         self.background = pygame.surface.Surface(self.size).convert_alpha()
@@ -96,12 +107,12 @@ class CenteredText(view.View):
 
         self.set_text("")
 
-    def set_text(self, text: str):
-        """Changes the text display by this view"""
+    def set_text(self, text: str) -> None:
+        """Changes the text display by this view."""
         lines = text.split("\n")
         self.images = [self.font.render(line, True, (255, 255, 255)) for line in lines]
 
-        text_height = sum((image.get_size()[1] for image in self.images))
+        text_height = sum(image.get_size()[1] for image in self.images)
         self.rects = []
         height = (self.size[1] - text_height) // 2
         for image in self.images:
@@ -110,6 +121,7 @@ class CenteredText(view.View):
             self.rects.append(pygame.rect.Rect(pos, size))
             height += size[1]
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.background, (0, 0))
         for image, rect in zip(self.images, self.rects):

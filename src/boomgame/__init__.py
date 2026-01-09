@@ -1,26 +1,24 @@
 """BOOM remake based on pygame."""
 
+import importlib.metadata
 import sys
 
 # Following https://setuptools.pypa.io/en/latest/userguide/datafiles.html#accessing-data-files-at-runtime
 # We use importlib.resources for python > 3.10 and fallback with importlib_resources
 
-# pylint: disable=import-error
-assert sys.version_info.major == 3
-if sys.version_info.minor < 10:
-    import importlib_resources  # type: ignore
+if sys.version_info < (3, 10):
+    import importlib_resources
 else:
-    import importlib.resources as importlib_resources  # type: ignore
-# pylint: enable=import-error
+    import importlib.resources as importlib_resources
 
 
-__version__ = "0.4.6"
+__version__ = importlib.metadata.version("boomgame")
 resources = importlib_resources.files("boomgame.data")
 
 
 def display_version() -> None:
-    """Entry point of boom_version command
+    """Entry point of boom_version command.
 
     Print the version on stdout
     """
-    print(__version__)
+    print(__version__)  # noqa: T201

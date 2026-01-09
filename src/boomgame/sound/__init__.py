@@ -1,8 +1,8 @@
-"""Handle the music and sound of the game"""
+"""Handle the music and sound of the game."""
 
 import pygame.mixer
 
-from .. import resources
+from boomgame import importlib_resources, resources
 
 
 def load_sound(file_name: str) -> pygame.mixer.Sound:
@@ -16,7 +16,8 @@ def load_sound(file_name: str) -> pygame.mixer.Sound:
     """
     resource = resources.joinpath("sound").joinpath(file_name)
 
-    return pygame.mixer.Sound(resource)
+    with importlib_resources.as_file(resource) as file_path:
+        return pygame.mixer.Sound(file_path)
 
 
 def load_music(file_name: str) -> None:
@@ -27,4 +28,5 @@ def load_music(file_name: str) -> None:
     """
     resource = resources.joinpath("music").joinpath(file_name)
 
-    pygame.mixer.music.load(resource)
+    with importlib_resources.as_file(resource) as file_path:
+        pygame.mixer.music.load(file_path)

@@ -1,1 +1,1 @@
-"""Menu GUI using pygame-gui"""
+"""Menu GUI using pygame-gui."""

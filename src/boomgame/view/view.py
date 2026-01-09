@@ -2,37 +2,42 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+import sys
 
 import pygame
-import pygame.display
-import pygame.image
 import pygame.font
+import pygame.image
 import pygame.rect
 import pygame.surface
 import pygame.transform
 
-from .. import resources
-from . import TILE_SIZE
+from boomgame import importlib_resources, resources
+from boomgame.view import TILE_SIZE
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
-def load_image(file_name: str, size: Optional[Tuple[int, int]] = None) -> pygame.surface.Surface:
+def load_image(file_name: str, size: tuple[int, int] | None = None) -> pygame.surface.Surface:
     """Load an image from the image folder (boomgame/data/image).
 
     Should only be called when the main window (mode) has been set.
 
     Args:
         file_name (str): image file
-        size (Optional, Tuple[int, int]): Convert the image to this size. (in pixels)
+        size (tuple[int, int] | None): Convert the image to this size. (in pixels)
 
     Return:
         pygame.surface.Surface: The image loaded.
     """
     resource = resources.joinpath("image").joinpath(file_name)
 
-    if size:
-        return pygame.transform.scale(pygame.image.load(resource).convert_alpha(), size)
-    return pygame.image.load(resource).convert_alpha()
+    with importlib_resources.as_file(resource) as file_path:
+        if size:
+            return pygame.transform.scale(pygame.image.load(file_path).convert_alpha(), size)
+        return pygame.image.load(file_path).convert_alpha()
 
 
 def load_font(file_name: str, size: int) -> pygame.font.Font:
@@ -47,7 +52,8 @@ def load_font(file_name: str, size: int) -> pygame.font.Font:
     """
     resource = resources.joinpath("font").joinpath(file_name)
 
-    return pygame.font.Font(resource, size)
+    with importlib_resources.as_file(resource) as file_path:
+        return pygame.font.Font(file_path, size)
 
 
 class View:
@@ -58,12 +64,12 @@ class View:
         size (Tuple[int, int]): Size that is taken by the view
     """
 
-    def __init__(self, position: Tuple[int, int], size: Tuple[int, int]) -> None:
+    def __init__(self, position: tuple[int, int], size: tuple[int, int]) -> None:
         self.position = position
         self.size = size
 
     def display(self, surface: pygame.surface.Surface) -> None:
-        """Display the view on the given surface
+        """Display the view on the given surface.
 
         Args:
             surface (pygame.surface.Surface): Surface that is written by the view
@@ -72,22 +78,23 @@ class View:
 
 
 class ImageView(View):
-    """View of an image
+    """View of an image.
 
     Attrs: (See View for additional ones)
         image (pygame.surface.Surface): The pygame surface to display.
     """
 
-    def __init__(self, image: pygame.surface.Surface, position: Tuple[int, int]) -> None:
+    def __init__(self, image: pygame.surface.Surface, position: tuple[int, int]) -> None:
         super().__init__(position, image.get_size())
         self.image = image
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.image, self.position)
 
 
 class Sprite(View):
-    """Handle a sprite image to animate a view
+    """Handle a sprite image to animate a view.
 
     Sprite image should be a 2D matrix of sprites of the same size.
 
@@ -103,21 +110,24 @@ class Sprite(View):
     ROWS = 1
     COLUMNS = 1
 
-    def __init__(self, sprite_image: pygame.surface.Surface, position: Tuple[int, int]) -> None:
+    def __init__(self, sprite_image: pygame.surface.Surface, position: tuple[int, int]) -> None:
         super().__init__(position, self.SPRITE_SIZE)
         self.sprite_image = sprite_image
         self.current_sprite = pygame.rect.Rect((0, 0), self.SPRITE_SIZE)
 
     def select_sprite(self, row: int, column: int) -> None:
-        """Select which sprite to use from the sprite image
+        """Select which sprite to use from the sprite image.
 
         Args:
-            row (int), column (int): Position of the sprite to select.
+            row (int): Position (row) of the sprite to select.
+            column (int): Position (col) of the sprite to select.
         """
-        assert row < self.ROWS and column < self.COLUMNS
+        assert row < self.ROWS
+        assert column < self.COLUMNS
         self.current_sprite = pygame.rect.Rect(
             (column * self.SPRITE_SIZE[0], row * self.SPRITE_SIZE[1]), self.SPRITE_SIZE
         )
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.sprite_image, self.position, self.current_sprite)

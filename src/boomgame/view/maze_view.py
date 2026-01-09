@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Set
+import sys
+from typing import TYPE_CHECKING
 
 import pygame
 import pygame.rect
 import pygame.surface
 
-from ..designpattern import event, observer
-from ..model import events, maze
-from . import TILE_SIZE, inflate_to_reality
-from . import animation, entity_view, view
+from boomgame.designpattern import observer
+from boomgame.model import events
+from boomgame.view import TILE_SIZE, animation, entity_view, inflate_to_reality, view
+
+if TYPE_CHECKING:
+    from boomgame.designpattern import event
+    from boomgame.model import maze
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
 class MazeView(view.View, observer.Observer):
@@ -24,7 +33,7 @@ class MazeView(view.View, observer.Observer):
     background_file = "background.png"
 
     def __init__(self, maze_: maze.Maze, style: int) -> None:
-        """Constructor
+        """Constructor.
 
         Args:
             maze_ (maze.Maze): The maze to represent
@@ -48,10 +57,10 @@ class MazeView(view.View, observer.Observer):
             view_.set_style(style)
 
         # Animations
-        self.animations: Set[animation.MazeAnimationView] = set()
+        self.animations: set[animation.MazeAnimationView] = set()
 
     def _build_background(self, style: int) -> None:
-        """Build the background surface for the given style"""
+        """Build the background surface for the given style."""
         background_sprite = view.load_image(self.background_file, inflate_to_reality((8, 1)))
         border_sprite = view.load_image(self.border_file, inflate_to_reality((8, 8)))
 
@@ -79,6 +88,7 @@ class MazeView(view.View, observer.Observer):
             current_sprite = pygame.rect.Rect(inflate_to_reality((style, n)), TILE_SIZE)
             self.background.blit(border_sprite, inflate_to_reality((i, j)), current_sprite)
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         # Display the background
         surface.blit(self.background, self.position)
@@ -93,7 +103,8 @@ class MazeView(view.View, observer.Observer):
         for animation_ in sorted(self.animations):
             animation_.display(surface)
 
-    def notify(self, event_: event.Event) -> None:
+    @override
+    def notify(self, event_: event.Event) -> None:  # noqa: C901
         if isinstance(event_, events.NewEntityEvent):
             self.entity_views.add(entity_view.EntityView.from_entity(event_.entity))
             event_.handled = True

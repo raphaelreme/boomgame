@@ -1,20 +1,23 @@
 from __future__ import annotations
 
-from . import element
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from boomgame.menu import element
 
 
 def quit_game(source: element.Element) -> None:
-    """Quit BOOM game"""
+    """Quit BOOM game."""
     source.page.menu.quit_callback()
 
 
 def new_game(source: element.Element) -> None:
-    """Start a new BOOM game"""
+    """Start a new BOOM game."""
     source.page.menu.start_callback(True, 0)
 
 
 def open_game(source: element.Element) -> None:
-    """Open a saved game
+    """Open a saved game.
 
     XXX: USED for DEBUG currently
     """

@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING
 
-from . import theme
+if TYPE_CHECKING:
+    from boomgame.menu import theme
 
 
 @dataclasses.dataclass
 class ElementProperties:
-    """Properties for displayed element in a page
+    """Properties for displayed element in a page.
 
     Elements are defined in the page json as:
     {
@@ -25,24 +26,21 @@ class ElementProperties:
         z (float): Offset of the shadow (depth) in tile unit
     """
 
-    pos: Tuple[float, float]
+    pos: tuple[float, float]
     z: float
     align: str
 
     @classmethod
     def build(cls, page_theme: theme.Theme, element_dict: dict) -> ElementProperties:
+        """Build the dataclass correctly."""
         klass = element_dict.get("style", element_dict["element"])
 
         kwargs = {}
-        for property_, field in cls.__dataclass_fields__.items():  # pylint: disable=no-member
+        for property_, field in cls.__dataclass_fields__.items():
             if property_ in element_dict:
                 kwargs[property_] = element_dict[property_]
             else:
-                default = (
-                    None
-                    if isinstance(field.default, dataclasses._MISSING_TYPE)  # pylint: disable=protected-access
-                    else field.default
-                )
+                default = None if isinstance(field.default, dataclasses._MISSING_TYPE) else field.default  # noqa: SLF001
                 kwargs[property_] = page_theme.get(klass, property_, default)
 
         return cls(**kwargs)
@@ -50,7 +48,7 @@ class ElementProperties:
 
 @dataclasses.dataclass
 class TextProperties(ElementProperties):
-    """Text properties
+    """Text properties.
 
     Attributes:
         text (str): Text to display
@@ -68,22 +66,21 @@ class TextProperties(ElementProperties):
 
 @dataclasses.dataclass
 class ImageProperties(ElementProperties):
-    """Image properties
+    """Image properties.
 
     Attributes:
         image_name (str): Image to display
-        image_size (Optional[Tuple[float, float]]): Optional resize
+        image_size (Tuple[float, float] | None): Optional resize
 
     """
 
     image_name: str
-    image_size: Optional[Tuple[float, float]]
+    image_size: tuple[float, float] | None
 
 
 @dataclasses.dataclass
 class ButtonProperties(TextProperties):
-    """Button properties
-
+    """Button properties.
 
     Attributes:
         text_color_hovered (str): Text color when hovered

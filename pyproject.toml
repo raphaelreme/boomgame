@@ -32,11 +32,15 @@ requires-python = ">=3.9"
 dependencies = [
     "importlib-resources ; python_full_version < '3.10'",
     "pygame-ce",
+    "typing-extensions ; python_full_version < '3.11'",
 ]
 
 [dependency-groups]
 dev = [
+    "ipywidgets",
+    "matplotlib",
     "mypy",
+    "notebook",
     "prek",
     "pygbag",
     "pyinstaller",
@@ -85,6 +89,8 @@ lint.ignore = [
     "EM", "TRY003",  # Let's rely on standard exceptions
     "FBT",  # Ignore boolean trap
     "FIX", "TD",  # Ignore TODO, FIXME, XXX
+    "S311",  # Pseudo-randomness is enough
+    "S101",  # assert are ok for now. TODO: Remove assert.
 ]
 
 

@@ -1,19 +1,25 @@
-"""Handle sound for a given maze"""
+"""Handle sounds for a given maze."""
 
 from __future__ import annotations
+
+import contextlib
+from typing import TYPE_CHECKING
 
 import pygame
 import pygame.mixer
 
-from ..designpattern import event, observer
-from ..model import events, maze
-from . import load_sound
-from . import entity_sound
+from boomgame.designpattern import observer
+from boomgame.model import events
+from boomgame.sound import entity_sound, load_sound
+
+if TYPE_CHECKING:
+    from boomgame.designpattern import event
+    from boomgame.model import maze
 
 
 # TODO: Adjust volume of different sounds ?
 class MazeSound(observer.Observer):
-    """Handle all the sounds of the maze"""
+    """Handle all the sounds of the maze."""
 
     solved = "MazeSolved.wav"
     failed = "MazeFailed.wav"
@@ -22,7 +28,7 @@ class MazeSound(observer.Observer):
     extra_life = "ExtraLife.wav"
 
     def __init__(self, maze_: maze.Maze) -> None:
-        """Constructor
+        """Constructor.
 
         Args:
             maze_ (maze.Maze): The maze to represent
@@ -42,12 +48,11 @@ class MazeSound(observer.Observer):
         self.entity_sounds = {entity_sound.EntitySound.from_entity(entity_) for entity_ in self.maze.entities}
 
         # Start the music if loaded
-        try:
+        with contextlib.suppress(pygame.error):
             pygame.mixer.music.play(-1)
-        except pygame.error:
-            pass  # If not loaded
 
     def notify(self, event_: event.Event) -> None:
+        """Handle Maze events."""
         if isinstance(event_, events.NewEntityEvent):
             self.entity_sounds.add(entity_sound.EntitySound.from_entity(event_.entity))
             return

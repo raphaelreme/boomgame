@@ -4,7 +4,6 @@ import pygame
 
 from boomgame.main import BoomGame
 
-
 if __name__ == "__main__":
     pygame.init()
     game = BoomGame()

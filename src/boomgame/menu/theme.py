@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
-from typing import Tuple
+from typing import Any
 
-from .. import resources
+from boomgame import resources
 
 
 class Theme:  # Ugly
-    """Load a theme
+    """Load a theme.
 
     A theme is simply a background sprite (name and size) with default properties for elements or class
 
@@ -30,16 +30,16 @@ class Theme:  # Ugly
         resource = resources.joinpath("theme").joinpath(f"{name}.json")
         self.data: dict = json.loads(resource.read_text())
         self.background: str = self.data["background"]
-        self.background_size: Tuple[float, float] = self.data["background_size"]
+        self.background_size: tuple[float, float] = self.data["background_size"]
 
-    def get(self, klass: str, property_: str, default=None):
-        if klass in self.data:
-            if property_ in self.data[klass]:
-                return self.data[klass][property_]
-        if self.DEFAULT in self.data:
-            if property_ in self.data[self.DEFAULT]:
-                return self.data[self.DEFAULT][property_]
+    def get(self, klass: str, property_: str, default=None) -> Any:  # noqa: ANN401
+        """Get the value of the property."""
+        if klass in self.data and property_ in self.data[klass]:
+            return self.data[klass][property_]
+        if self.DEFAULT in self.data and property_ in self.data[self.DEFAULT]:
+            return self.data[self.DEFAULT][property_]
 
         if default is None:
             raise KeyError(f"Unable to find property {property_} for class {klass}")
+
         return default

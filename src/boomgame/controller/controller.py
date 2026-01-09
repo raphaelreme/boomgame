@@ -5,14 +5,15 @@ Handle all the events.
 
 from __future__ import annotations
 
-from typing import List
+from typing import TYPE_CHECKING
 
-import pygame.event
+from boomgame.controller import control
+from boomgame.model import vector
 
-from ..model import entity
-from ..model import game
-from ..model import vector
-from . import control
+if TYPE_CHECKING:
+    import pygame.event
+
+    from boomgame.model import entity, game
 
 
 class GameController:
@@ -39,10 +40,7 @@ class GameController:
             # FIXME: If a player key is pressed it could be stored ?
             return False
 
-        for controller in self.player_controllers:
-            if controller.handle_user_event(event):
-                return True
-        return False
+        return any(controller.handle_user_event(event) for controller in self.player_controllers)
 
     def tick(self, delta_time: float) -> None:
         """Called at each time step.
@@ -73,7 +71,7 @@ class PlayerController:
             self.player_control.right: vector.Direction.RIGHT,
             self.player_control.left: vector.Direction.LEFT,
         }
-        self.direction_pressed: List[int] = []
+        self.direction_pressed: list[int] = []
         self.bombing = False
 
     def handle_user_event(self, event: pygame.event.Event) -> bool:
@@ -96,7 +94,10 @@ class PlayerController:
             return False
 
         if event.type == control.TypeControl.KEY_DOWN:
-            assert event.key not in self.direction_pressed
+            if event.key in self.direction_pressed:
+                # TODO: Remove ? or Handle ?
+                raise RuntimeError("This key was already pressed...")
+
             self.direction_pressed.append(event.key)
         elif event.type == control.TypeControl.KEY_UP:
             self.direction_pressed.remove(event.key)
@@ -109,6 +110,7 @@ class PlayerController:
         return True
 
     def tick(self, _delta_time: float) -> None:
+        """Called at each time step, moving time forward."""
         if self.bombing:
             self.player.bombs()  # Try to bomb at each time step when bombing
         # Note that entity update is done by game controller, no need to redo it.

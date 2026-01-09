@@ -1,26 +1,32 @@
-"""Handle the sound of all the game"""
+"""Handle the sounds of all the game."""
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pygame.mixer
 
-from ..designpattern import event, observer
-from ..model import events, game
-from . import load_music
-from . import maze_sound
+from boomgame.designpattern import observer
+from boomgame.model import events
+from boomgame.sound import load_music, maze_sound
+
+if TYPE_CHECKING:
+    from boomgame.designpattern import event
+    from boomgame.model import game
 
 
 class GameSound(observer.Observer):
-    """Produces all the sound in the game"""
+    """Produces all the sound in the game."""
 
     def __init__(self, model: game.GameModel) -> None:
         super().__init__()
         self.model = model
         self.model.add_observer(self)
         self.maze_sound = maze_sound.MazeSound(self.model.maze)
-        # pygame.mixer.music.set_volume(1.0)
+        # Set volume? pygame.mixer.music.set_volume(1.0)
 
     def notify(self, event_: event.Event) -> None:
+        """Handle Game event."""
         if isinstance(event_, events.MazeStartEvent):
             self.maze_sound = maze_sound.MazeSound(self.model.maze)
 

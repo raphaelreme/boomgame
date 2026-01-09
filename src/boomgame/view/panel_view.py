@@ -2,17 +2,25 @@
 
 from __future__ import annotations
 
-from typing import Dict, Tuple
+import sys
+from typing import TYPE_CHECKING, ClassVar
 
 import pygame
-import pygame.font
 import pygame.rect
 import pygame.surface
 
-from ..designpattern import event, observer
-from ..model import entity, events, game
-from . import TILE_SIZE, inflate_to_reality
-from . import view
+from boomgame.designpattern import observer
+from boomgame.model import events
+from boomgame.view import TILE_SIZE, inflate_to_reality, view
+
+if TYPE_CHECKING:
+    from boomgame.designpattern import event
+    from boomgame.model import entity, game
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
 # XXX: Some very ugly stuff with ratio size and position...
@@ -21,8 +29,8 @@ from . import view
 def display_with_shadow(
     surface: pygame.surface.Surface,
     image: pygame.surface.Surface,
-    position: Tuple[int, int],
-    shadow_offset: Tuple[int, int],
+    position: tuple[int, int],
+    shadow_offset: tuple[int, int],
 ) -> None:
     """Blit an image with an underlying shadow.
 
@@ -42,15 +50,16 @@ def display_with_shadow(
 
 
 class PanelView(view.ImageView):
-    """Panel of the game
+    """Panel of the game.
 
     Display the remaining time, the life of the players, the scores and the bonuses.
     """
 
     SIZE = (15, 3)  # Default size in tiles
+    HURRY = 30
 
     # Default positions of components in tiles
-    POSITIONS: Dict[str, Tuple[float, float]] = {
+    POSITIONS: ClassVar[dict[str, tuple[float, float]]] = {
         "player_details_1": (1.5, 0),
         "player_details_2": (8, 0),
         "time": (7, 0.7),
@@ -78,6 +87,7 @@ class PanelView(view.ImageView):
             for i in self.player_details
         }
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         super().display(surface)
 
@@ -85,7 +95,7 @@ class PanelView(view.ImageView):
 
         minutes = time // 60
         seconds = time % 60
-        color = (255, 0, 0) if time <= 30 else (255, 255, 255)
+        color = (255, 0, 0) if time <= self.HURRY else (255, 255, 255)
 
         time_text = self.font.render(f"{minutes:02d}:{seconds:02d}", True, color).convert_alpha()
 
@@ -96,12 +106,12 @@ class PanelView(view.ImageView):
 
 
 class PlayerDetails(view.View, observer.Observer):
-    """Display life, scores and bonuses of players"""
+    """Display life, scores and bonuses of players."""
 
     SIZE = (5.5, 3)  # Default size in tiles
 
     # Default positions of components in tiles
-    POSITIONS = {
+    POSITIONS: ClassVar[dict[str, tuple[float, float]]] = {
         "player_head": (0.5, 0.5),
         "life": (0.4, 1.5),
         "health": (1.5, 0.5),
@@ -142,6 +152,7 @@ class PlayerDetails(view.View, observer.Observer):
 
         self.game_over = self.player.life == 0
 
+    @override
     def notify(self, event_: event.Event) -> None:
         if isinstance(event_, events.HitEntityEvent):
             self.health.build_hearts()
@@ -152,6 +163,7 @@ class PlayerDetails(view.View, observer.Observer):
             self.extra.build_extra()
             self.bonus.build_bonus()
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         life_text = self.font.render(f" x{self.player.life}", True, (255, 255, 255)).convert_alpha()
         score_text = self.font.render("score", True, (255, 255, 255)).convert_alpha()
@@ -175,7 +187,7 @@ class PlayerDetails(view.View, observer.Observer):
 
 
 class HealthView(view.Sprite):
-    """Display the hearts of each player"""
+    """Display the hearts of each player."""
 
     # Default size in tiles
     SIZE = (1 + PanelView.SHADOW_OFFSET[0], 2 + PanelView.SHADOW_OFFSET[1])
@@ -207,6 +219,7 @@ class HealthView(view.Sprite):
         self.build_hearts()
 
     def build_hearts(self) -> None:
+        """Construct the hearts view."""
         self.hearts.fill((0, 0, 0, 0))  # Full transparency
 
         # Select the heart given the health
@@ -233,12 +246,13 @@ class HealthView(view.Sprite):
                     self.hearts, heart, (self.SPRITE_SIZE[0] * j, self.SPRITE_SIZE[1] * i), self.shadow_offset
                 )
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.hearts, self.position)
 
 
 class ExtraView(view.Sprite):
-    """Display the extra of each player"""
+    """Display the extra of each player."""
 
     # Default size in tiles
     SIZE = (13 / 32 + PanelView.SHADOW_OFFSET[0], 5 * 15 / 32 + PanelView.SHADOW_OFFSET[1])
@@ -271,6 +285,7 @@ class ExtraView(view.Sprite):
         self.build_extra()
 
     def build_extra(self) -> None:
+        """Construct the extra view."""
         self.extra.fill((0, 0, 0, 0))  # Full transparency
 
         for i, has_letter in enumerate(self.player.extra):
@@ -282,12 +297,13 @@ class ExtraView(view.Sprite):
             icon = self.sprite_image.subsurface(self.current_sprite)
             display_with_shadow(self.extra, icon, (i * (self.SPRITE_SIZE[0] + 2), 0), self.shadow_offset)
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.extra, self.position)
 
 
 class BonusView(view.Sprite):
-    """Display the bonus of each player"""
+    """Display the bonus of each player."""
 
     # Default size in tiles
     SIZE = (1 + 13 / 32 + PanelView.SHADOW_OFFSET[0], 5 * 14 / 32 + PanelView.SHADOW_OFFSET[1])
@@ -321,6 +337,7 @@ class BonusView(view.Sprite):
         self.build_bonus()
 
     def build_bonus(self) -> None:
+        """Construct the bonus view."""
         self.bonus.fill((0, 0, 0, 0))  # Full transparency
 
         # Bomb capacity
@@ -356,5 +373,6 @@ class BonusView(view.Sprite):
         icon = self.sprite_image.subsurface(self.current_sprite)
         display_with_shadow(self.bonus, icon, (4 * (self.SPRITE_SIZE[0] + 1), 0), self.shadow_offset)
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.bonus, self.position)

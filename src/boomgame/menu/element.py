@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pygame
 
-from ..view import panel_view, view, inflate_to_reality, TILE_SIZE
-from . import element_properties, menu
+from boomgame.menu import element_properties
+from boomgame.view import TILE_SIZE, inflate_to_reality, panel_view, view
+
+if TYPE_CHECKING:
+    from boomgame.menu import menu
 
 
 class Element(view.ImageView):
-    """A basic element on a page with a shadow"""
+    """A basic element on a page with a shadow."""
 
     def __init__(self, page: menu.Page, properties: element_properties.ElementProperties) -> None:
         super().__init__(pygame.surface.Surface((0, 0)), inflate_to_reality(properties.pos))
@@ -16,10 +21,12 @@ class Element(view.ImageView):
         self.shadow_offset = inflate_to_reality((self.properties.z, self.properties.z))
 
     def display(self, surface: pygame.surface.Surface) -> None:
+        """Display the element on the given surface."""
         panel_view.display_with_shadow(surface, self.image, self.top_left_position, self.shadow_offset)
 
     @property
-    def top_left_position(self):
+    def top_left_position(self) -> tuple[int, int]:
+        """Top left position of the Element."""
         x, y = self.position
         size = self.image.get_size()  # Size without shadow
         align_y, align_x = self.properties.align.split("-")
@@ -44,16 +51,19 @@ class Element(view.ImageView):
 
     @staticmethod
     def build(element_dict: dict, page: menu.Page) -> Element:
+        """Build Element from properties."""
         element_class, property_class = {
             "Text": (TextElement, element_properties.TextProperties),
             "Image": (ImageElement, element_properties.ImageProperties),
             "Button": (ButtonElement, element_properties.ButtonProperties),
         }[element_dict["element"]]
 
-        return element_class(page, property_class.build(page.theme, element_dict))  # type: ignore
+        return element_class(page, property_class.build(page.theme, element_dict))  # type: ignore[attr-defined]
 
 
 class InteractiveElement(Element):
+    """Element with Event handling."""
+
     def __init__(self, page: menu.Page, properties: element_properties.ElementProperties) -> None:
         super().__init__(page, properties)
         self.hovered = False
@@ -62,9 +72,11 @@ class InteractiveElement(Element):
 
     @property
     def rect(self) -> pygame.Rect:
+        """Rect of the Element (from top-left to bottom-right)."""
         return pygame.Rect(self.top_left_position, self.size)
 
-    def handle_event(self, event):
+    def handle_event(self, event) -> None:
+        """Handle a Pygame Event on this Element."""
         if event.type == pygame.MOUSEMOTION:
             hovered = self.rect.collidepoint(event.pos)
             if hovered and not self.hovered:
@@ -83,20 +95,20 @@ class InteractiveElement(Element):
             if hovered:  # Trigger a real click only if still hovered
                 self.click()
 
-    def hover(self, hovered: bool):
-        """Called when the state over changes"""
+    def hover(self, hovered: bool) -> None:
+        """Called when the state over changes."""
         self.hovered = hovered
 
-    def update(self, delay: float):
-        """Update the optional animation of the object"""
+    def update(self, delay: float) -> None:
+        """Update the optional animation of the object."""
 
-    def click(self):
-        """Handle a click"""
+    def click(self) -> None:
+        """Handle a click."""
         self.clicked = True
 
 
 class ImageElement(Element):
-    """Display an image in the page"""
+    """Display an image in the page."""
 
     def __init__(self, page: menu.Page, properties: element_properties.ImageProperties) -> None:
         super().__init__(page, properties)
@@ -109,7 +121,7 @@ class ImageElement(Element):
 
 
 class TextElement(Element):
-    """Display text in the page"""
+    """Display text in the page."""
 
     def __init__(self, page: menu.Page, properties: element_properties.TextProperties) -> None:
         super().__init__(page, properties)
@@ -118,7 +130,7 @@ class TextElement(Element):
         self.set_text(self.properties.text)
 
     def set_text(self, text: str) -> None:
-        """Set the text of the Element
+        """Set the text of the Element.
 
         Solves traductions and variables
         """
@@ -132,7 +144,7 @@ class TextElement(Element):
 
 
 class ButtonElement(TextElement, InteractiveElement):
-    """Display an interactable button"""
+    """Display an interactable button."""
 
     COLOR_SWITCH_DELAY = 0.1
 
@@ -141,12 +153,14 @@ class ButtonElement(TextElement, InteractiveElement):
         self.properties: element_properties.ButtonProperties
         self.clicked_delay = self.properties.clicked_delay
 
-    def hover(self, hovered: bool):
+    def hover(self, hovered: bool) -> None:
+        """Called when the state over changes."""
         super().hover(hovered)
         text_color = self.properties.text_color_hovered if hovered else self.properties.text_color
         self.image = self.font.render(self.properties.text, True, text_color).convert_alpha()
 
-    def update(self, delay: float):
+    def update(self, delay: float) -> None:
+        """Update the optional animation of the object."""
         if self.clicked:
             self.clicked_delay -= delay
             use_hovered = int(self.clicked_delay / self.COLOR_SWITCH_DELAY) % 2
@@ -159,4 +173,4 @@ class ButtonElement(TextElement, InteractiveElement):
                 if action:
                     action(self)
                 else:
-                    print(f"Warning: {self.properties.action} not found")
+                    print(f"Warning: {self.properties.action} not found")  # noqa: T201

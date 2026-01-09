@@ -1,15 +1,15 @@
-"""Timers in the model"""
+"""Timers in the model."""
 
 
 class Timer:
-    """Timer that keep track of the time
+    """Timer that keep track of the time.
 
     Basic usage:
     ```
     timer = Timer()
     timer.start(10.5)
     for i in range(15):
-        done = timer.update(1.)
+        done = timer.update(1.0)
         if done:
             break
     assert i == 10
@@ -32,13 +32,14 @@ class Timer:
 
     @property
     def is_done(self) -> bool:
+        """Wether the timer has reached its final value."""
         if not self.is_active:
             return False
 
-        return self.increase and self.current >= self.total or not self.increase and self.current <= 0
+        return (self.increase and self.current >= self.total) or (not self.increase and self.current <= 0)
 
     def start(self, total: float) -> None:
-        """Start the timer with `total` time
+        """Start the timer with `total` time.
 
         Cannot be started if already active (Call reset first)
 
@@ -57,7 +58,7 @@ class Timer:
             self.current = self.total
 
     def update(self, delay: float) -> bool:
-        """Update the timer by a delay
+        """Update the timer by a delay.
 
         Does nothing if not active
 
@@ -78,7 +79,7 @@ class Timer:
         return self.current <= 0
 
     def reset(self) -> None:
-        """Reset the time
+        """Reset the time.
 
         The timer is no longer active and can be restarted. Can be called even if not done.
         """

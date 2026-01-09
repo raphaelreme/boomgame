@@ -1,18 +1,17 @@
-"""Model that handle data for the whole game"""
+"""Model that handle data for the whole game."""
 
 from __future__ import annotations
 
 import enum
 import json
-from typing import Dict, List
 
-from .. import resources
-from ..designpattern import observable
-from . import maze, entity, events, timer
+from boomgame import resources
+from boomgame.designpattern import observable
+from boomgame.model import entity, events, maze, timer
 
 
 class GameModel(observable.Observable):
-    """Observable model of the game
+    """Observable model of the game.
 
     Will handle the current maze, the players and everything else.
 
@@ -30,6 +29,8 @@ class GameModel(observable.Observable):
     """
 
     class State(enum.Enum):
+        """Possible states of the game."""
+
         MENU = 0
         START_SCREEN = 1
         RUNNING = 2
@@ -42,7 +43,7 @@ class GameModel(observable.Observable):
     def __init__(self, game_name: str, two_players: bool = False) -> None:
         super().__init__()
         resource = resources.joinpath("game").joinpath(f"{game_name}.json")
-        self.levels: List[Dict[str, int]] = json.loads(resource.read_text())
+        self.levels: list[dict[str, int]] = json.loads(resource.read_text())
 
         self.state = GameModel.State.MENU
 
@@ -78,7 +79,7 @@ class GameModel(observable.Observable):
 
         resource = resources.joinpath("maze").joinpath(f"{maze_id}.txt")
         self.maze = maze.Maze.unserialize(resource.read_text())
-        # assert self.maze.size == self.MAZE_SIZE, f"This game only supports maze with a size {self.MAZE_SIZE}"
+        # Check? assert self.maze.size == self.MAZE_SIZE, f"This game only supports maze with a size {self.MAZE_SIZE}"
 
         for player in self.players.values():
             if player.life:
@@ -87,14 +88,14 @@ class GameModel(observable.Observable):
         self.changed(events.StartScreenEvent())
 
     def start_maze(self) -> None:
-        """Start the maze"""
+        """Start the maze."""
         assert self.state == GameModel.State.START_SCREEN
         self.state = GameModel.State.RUNNING
 
         self.changed(events.MazeStartEvent())
 
     def end_maze(self, success: bool) -> None:
-        """End the current maze
+        """End the current maze.
 
         Args:
             success (bool): Is the current maze a success
@@ -129,7 +130,7 @@ class GameModel(observable.Observable):
                 self.start_maze()
             else:
                 pass
-                # self.changed(events.ForwardStartScreenEvent())
+                # self.changed(events.ForwardStartScreenEvent())  # noqa: ERA001
             return
 
         if self.state == GameModel.State.BONUS_SCREEN:
@@ -138,7 +139,7 @@ class GameModel(observable.Observable):
                 self.start()
             else:
                 pass
-                # self.changed(events.ForwardBonusScreenEvent())
+                # self.changed(events.ForwardBonusScreenEvent())  # noqa: ERA001
             return
 
         # RUNNING

@@ -1,4 +1,4 @@
-"""BOOM model
+"""BOOM model.
 
 All the game logic is here.
 """

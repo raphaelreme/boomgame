@@ -1,14 +1,24 @@
 from __future__ import annotations
 
-import pygame.surface
+import sys
+from typing import TYPE_CHECKING
 
-from ..model import entity
-from . import inflate_to_reality, TILE_SIZE
-from . import maze_view, view
+from boomgame.view import TILE_SIZE, inflate_to_reality, view
+
+if TYPE_CHECKING:
+    import pygame.surface
+
+    from boomgame.model import entity
+    from boomgame.view import maze_view
+
+if sys.version_info < (3, 12):
+    from typing_extensions import override
+else:
+    from typing import override
 
 
 class LoadingAnimation(view.View):
-    """Loading animation when launching the game
+    """Loading animation when launching the game.
 
     Fake loading bar with bombs.
     """
@@ -37,11 +47,13 @@ class LoadingAnimation(view.View):
         self.loading_screen = view.load_image(self.LOADING_SCREEN, self.size)
 
     def forward(self, delay: float) -> None:
+        """Move time forward."""
         self.delay += delay
 
         if self.delay > self.LOGO_DELAY + self.SCREEN_DELAY:
             self.done = True
 
+    @override
     def display(self, surface: pygame.surface.Surface) -> None:
         if self.delay < self.LOGO_DELAY:
             surface.blit(self.loading_logo, self.position)
@@ -77,7 +89,7 @@ class MazeAnimationView(view.ImageView):
         self.delay = 0.0
 
     def forward(self, delay: float) -> None:
-        """Forward time in the animation"""
+        """Move time forward."""
         self.delay += delay
 
         if self.delay > self.DELAY:
@@ -86,17 +98,17 @@ class MazeAnimationView(view.ImageView):
         self.update()
 
     def update(self) -> None:
-        """Update the position of the view"""
+        """Update the position of the view."""
 
     def __lt__(self, other) -> bool:
-        """Animation are sorted by priority"""
+        """Animation are sorted by priority."""
         if isinstance(other, MazeAnimationView):
             return self.PRIORITY < other.PRIORITY
         return NotImplemented
 
 
 class MainSliderView(MazeAnimationView):
-    """Specific view that display an image by sliding it from top to bottom
+    """Specific view that display an image by sliding it from top to bottom.
 
     Used for ExtraGame, GameOver and HurryUp images
     """
@@ -120,6 +132,7 @@ class MainSliderView(MazeAnimationView):
 
         self.position = (self.x_position, self.y_position_init)
 
+    @override
     def update(self) -> None:
         if self.delay <= self.SLIDE_IN:
             t = self.delay / self.SLIDE_IN
@@ -132,22 +145,28 @@ class MainSliderView(MazeAnimationView):
 
 
 class GameOverSlider(MainSliderView):
+    """Game Over animation."""
+
     FILE_NAME = "game_over.png"
     PRIORITY = 13
 
 
 class HurryUpSlider(MainSliderView):
+    """Hurry Up animation."""
+
     FILE_NAME = "hurry_up.png"
     PRIORITY = 12
 
 
 class ExtraGameSlider(MainSliderView):
+    """Extra Game animation."""
+
     FILE_NAME = "extra_game.png"
     PRIORITY = 11
 
 
 class AnchoredSliderView(MazeAnimationView):
-    """Specific view that slides up over an entity
+    """Specific view that slides up over an entity.
 
     Used for scores and some other stuff
     """
@@ -158,7 +177,7 @@ class AnchoredSliderView(MazeAnimationView):
     def __init__(self, image: pygame.surface.Surface, maze_view_: maze_view.MazeView, anchor: entity.Entity) -> None:
         super().__init__(image, maze_view_)
 
-        position = inflate_to_reality(anchor.position + (1, 1))
+        position = inflate_to_reality(anchor.position + (1, 1))  # noqa: RUF005
         size = inflate_to_reality(anchor.size)
 
         self.x_position = int(position[0] + size[0] / 2 - self.size[0] / 2)
@@ -167,20 +186,21 @@ class AnchoredSliderView(MazeAnimationView):
 
         self.position = (self.x_position, self.y_position_init)
 
+    @override
     def update(self) -> None:
         t = self.delay / self.DELAY
         self.position = (self.x_position, int(self.y_position_init * (1 - t) + self.y_position_final * t))
 
 
 class ScoreSliderView(AnchoredSliderView):
-    """Handle all the score sliders"""
+    """Handle all the score sliders."""
 
     def __init__(self, maze_view_: maze_view.MazeView, anchor: entity.Entity) -> None:
         super().__init__(view.load_image(f"score_{anchor.SCORE.value}.png"), maze_view_, anchor)
 
 
 class ExtraLifeSliderView(AnchoredSliderView):
-    """Handle all the score sliders"""
+    """Handle all the score sliders."""
 
     def __init__(self, maze_view_: maze_view.MazeView, anchor: entity.Player) -> None:
         super().__init__(view.load_image(f"extra_life_{anchor.identifier}.png"), maze_view_, anchor)

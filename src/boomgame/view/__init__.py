@@ -4,13 +4,10 @@ The view will be able to display the corresponding image on
 the window.
 """
 
-from typing import Tuple
-
-
 TILE_SIZE = (32, 32)
 
 
-def inflate_to_reality(base: Tuple[float, float], ratio: float = 1) -> Tuple[int, int]:
+def inflate_to_reality(base: tuple[float, float], ratio: float = 1) -> tuple[int, int]:
     """Inflate size/position to the real world.
 
     Args:

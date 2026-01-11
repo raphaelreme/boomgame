@@ -1,3 +1,11 @@
+# /// script
+# dependencies = [
+#  "pygame-ce",
+#  "importlib-resources",
+#  "typing-extensions",
+# ]
+# ///
+
 import asyncio
 
 import pygame

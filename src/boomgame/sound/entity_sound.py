@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING, ClassVar, cast
 
+from boomgame import sound_extension
 from boomgame.designpattern import observer
 from boomgame.model import entity, events
 from boomgame.sound import load_sound
@@ -46,7 +47,7 @@ class EntitySound(observer.Observer):
         sounds = {}
         for sound in self.sounds:
             with contextlib.suppress(FileNotFoundError):
-                sounds[sound] = load_sound(f"{self.sound_name}{sound}.wav")
+                sounds[sound] = load_sound(f"{self.sound_name}{sound}{sound_extension}")
 
         self.sound_loaded[self.sound_name] = sounds
         return sounds

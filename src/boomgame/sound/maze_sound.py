@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pygame
 import pygame.mixer
 
+from boomgame import sound_extension
 from boomgame.designpattern import observer
 from boomgame.model import events
 from boomgame.sound import entity_sound, load_sound
@@ -21,11 +22,11 @@ if TYPE_CHECKING:
 class MazeSound(observer.Observer):
     """Handle all the sounds of the maze."""
 
-    solved = "MazeSolved.wav"
-    failed = "MazeFailed.wav"
-    extra_game = "ExtraGame.wav"
-    hurry_up = "HurryUp.wav"
-    extra_life = "ExtraLife.wav"
+    solved = f"MazeSolved{sound_extension}"
+    failed = f"MazeFailed{sound_extension}"
+    extra_game = f"ExtraGame{sound_extension}"
+    hurry_up = f"HurryUp{sound_extension}"
+    extra_life = f"ExtraLife{sound_extension}"
 
     def __init__(self, maze_: maze.Maze) -> None:
         """Constructor.

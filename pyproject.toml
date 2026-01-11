@@ -41,6 +41,7 @@ dev = [
     "matplotlib",
     "mypy",
     "notebook",
+    "numpy",
     "prek",
     "pygbag",
     "pyinstaller",

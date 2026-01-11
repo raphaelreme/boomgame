@@ -12,7 +12,15 @@ else:
     import importlib.resources as importlib_resources
 
 
-__version__ = importlib.metadata.version("boomgame")
+try:
+    __version__ = importlib.metadata.version("boomgame")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "0.0.0"
+
+sound_extension = ".wav"
+if sys.platform == "emscripten":
+    sound_extension = ".ogg"
+
 resources = importlib_resources.files("boomgame.data")
 
 

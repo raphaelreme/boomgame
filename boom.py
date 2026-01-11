@@ -1,4 +1,4 @@
-"""Entry point for pyinstaller"""
+"""Entry point for pyinstaller."""
 
 from boomgame import main
 

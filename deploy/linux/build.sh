@@ -1,6 +1,6 @@
 set -e
 
-pyinstaller BOOM.spec
+uv run pyinstaller BOOM.spec
 
 PACKAGE_NAME=boom_$(boom_version)-1_all
 

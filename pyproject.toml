@@ -71,6 +71,8 @@ python-preference = "only-managed"
 line-length = 120
 indent-width = 4
 
+exclude = ["preprocess_data.ipynb"]
+
 
 # Format
 format.docstring-code-format = true

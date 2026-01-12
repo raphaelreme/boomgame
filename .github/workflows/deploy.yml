@@ -109,7 +109,7 @@ jobs:
           uv run pyinstaller BOOM.spec
           mv dist/BOOM.exe BOOM-${{ matrix.os }}.exe
       - name: Upload artifacts for windows
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}-artifacts
           retention-days: 2

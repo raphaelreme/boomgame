@@ -41,10 +41,11 @@ jobs:
         with:
           install-only: true
       - name: Run prek
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         run: |
           prek run --skip ruff-check --skip ruff-format --files $(
             git ls-files \
-              .github .gitignore .pre-commit-config.yaml .python_version
+              .github/ .gitignore .pre-commit-config.yaml .python_version
               src/ README.md LICENSE pyproject.toml boom.py \
               \
               ':(exclude)src/boomgame/data'

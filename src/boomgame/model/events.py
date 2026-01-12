@@ -27,11 +27,11 @@ class StartScreenEvent(Event):
 
 
 class ForwardStartScreenEvent(Event):
-    """Could be used to update the start scren."""
+    """Could be used to update the start screen."""
 
 
 class BonusScreenEvent(Event):
-    """At the begining of each bonus screen."""
+    """At the beginning of each bonus screen."""
 
 
 class ForwardBonusScreenEvent(Event):

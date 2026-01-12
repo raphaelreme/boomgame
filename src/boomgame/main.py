@@ -36,7 +36,7 @@ else:
 class BoomGame(observer.Observer):
     """BOOM Game.
 
-    Handle the main pygame loop of the game. Dispacth events and display. Handle window scaling
+    Handle the main pygame loop of the game. Dispatch events and display. Handle window scaling
     """
 
     class State(enum.IntEnum):

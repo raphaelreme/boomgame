@@ -22,7 +22,7 @@ class Vector(tuple[float, float]):  # noqa: SLOT001  # TODO: Check slots?
     """Simple 2D vector computations useful for positions and directions."""
 
     def __add__(self, other: object) -> Vector:
-        """Additon of two vectors."""
+        """Addition of two vectors."""
         if isinstance(other, tuple):
             if len(other) != len(self):
                 raise RuntimeError("Sizes do not match")
@@ -30,7 +30,7 @@ class Vector(tuple[float, float]):  # noqa: SLOT001  # TODO: Check slots?
         return NotImplemented
 
     def __radd__(self, other: object) -> Vector:
-        """Additon of two vectors (reversed)."""
+        """Addition of two vectors (reversed)."""
         return self + other
 
     def __mul__(self, other: object) -> Vector:
@@ -46,13 +46,13 @@ class Vector(tuple[float, float]):  # noqa: SLOT001  # TODO: Check slots?
         return self * other
 
     def __sub__(self, other: object) -> Vector:
-        """Substraction of two vectors."""
+        """Subtraction of two vectors."""
         if isinstance(other, tuple):
             return self + -1 * Vector(other)
         return NotImplemented
 
     def __rsub__(self, other: object) -> Vector:
-        """Substraction of two vectors (reversed)."""
+        """Subtraction of two vectors (reversed)."""
         return -1 * (self - other)
 
     def apply(self, func: Callable[[float], float]) -> Vector:

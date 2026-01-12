@@ -87,12 +87,12 @@ class Entity(observable.Observable, metaclass=EntityClass):
 
     Class Attrs:
         REPR (str): Static representation of entities in mazes.
-            If not provided, the entity will not be represented in a maze represention.
+            If not provided, the entity will not be represented in a maze representation.
         BASE_HEALTH (int): Hp of the entity. When reaching 0, the entity is removed.
             Default to 0 (Removed at the first damage received)
         SIZE (Tuple[float, float]): (# row, # columns) of the entity.
             Default to (1, 1) (One tile large)
-        VULNERABILIES (List[Damage.Type]): Vulnerabilies of the entity.
+        VULNERABILITIES (List[Damage.Type]): Vulnerabilities of the entity.
             Default to [] (Cannot take damage and is therefore invulnerable)
         REMOVING_DELAY (float): Time in removing state
             Default to 0 (Immediately removed.)
@@ -525,7 +525,7 @@ class MovingEntity(Entity):
             self.colliding_rect, lambda entity: isinstance(entity, self.BOUNCE_ON) and entity is not self
         )
         if len(colliding_entities) > 1:
-            print("WARNING: More than one entites colliding at once")  # noqa: T201
+            print("WARNING: More than one entities colliding at once")  # noqa: T201
 
         if colliding_entities:
             self.position -= self.current_direction.vector * step
@@ -673,7 +673,7 @@ class Flash(Entity):
 class Player(MovingEntity):  # pylint: disable=too-many-instance-attributes
     """Player entity.
 
-    Special entity, it is controlled by the player, it has several lifes,
+    Special entity, it is controlled by the player, it has several lives,
     credits, and goes through different mazes.
 
     It moves and drops bombs

@@ -110,7 +110,7 @@ class AlienSound(EntitySound):
 
     def notify(self, event_: event.Event) -> None:
         """Handle Entity event."""
-        # Eveything is handled by Enemy Sound
+        # Everything is handled by Enemy Sound
 
 
 class EnemySound(EntitySound):

@@ -52,7 +52,7 @@ jobs:
           cd deploy/linux
           bash build.sh
           mv dist/BOOM BOOM-${{ matrix.os }}
-          mv boom_$(boom_version)-1_all.deb "boom_$(boom_version)-1_all (${{ matrix.os }}).deb"
+          mv boom_$(uv version --short)-1_all.deb "boom_$(uv version --short)-1_all (${{ matrix.os }}).deb"
       - name: Upload artifacts for linux
         uses: actions/upload-artifact@v6
         with:

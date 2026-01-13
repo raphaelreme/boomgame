@@ -2,7 +2,7 @@ set -e
 
 uv run pyinstaller BOOM.spec
 
-BOOM_VERSION=$(uv run boom_version)
+BOOM_VERSION=$(uv version --short)
 
 PACKAGE_NAME=boom_$BOOM_VERSION-1_all
 

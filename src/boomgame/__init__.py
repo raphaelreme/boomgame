@@ -22,11 +22,3 @@ if sys.platform == "emscripten":
     sound_extension = ".ogg"
 
 resources = importlib_resources.files("boomgame.data")
-
-
-def display_version() -> None:
-    """Entry point of boom_version command.
-
-    Print the version on stdout
-    """
-    print(__version__)  # noqa: T201

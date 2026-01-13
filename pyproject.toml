@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "boomgame"
-version = "0.5.0"
+version = "0.5.1"
 description = "BOOM (MacOs shareware) remake with pygame"
 readme = "README.md"
 authors = [
@@ -55,9 +55,6 @@ Play = "https://raphaelreme.github.io/boomgame"
 Documentation = "https://github.com/raphaelreme/boomgame"
 Repository = "https://github.com/raphaelreme/boomgame"
 Issues = "https://github.com/raphaelreme/boomgame/issues"
-
-[project.scripts]
-boom_version = "boomgame:display_version"
 
 [project.gui-scripts]
 BOOM = "boomgame.main:main"

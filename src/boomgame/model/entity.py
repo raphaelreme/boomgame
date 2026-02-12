@@ -1012,7 +1012,7 @@ class Enemy(MovingEntity):
         if not self.BULLET_CLASS:
             return
 
-        direction = self.current_direction if self.current_direction else vector.Direction.DOWN
+        direction = self.current_direction or vector.Direction.DOWN
         self.maze.add_entity(self.BULLET_CLASS(self, direction.vector))
         self.firing_timer.reset()
         self.firing_timer.start(self.FIRING_DELAY)

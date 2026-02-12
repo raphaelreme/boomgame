@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import enum
 import sys
-from typing import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 if sys.version_info < (3, 12):
     from typing_extensions import override
@@ -24,9 +27,7 @@ class Vector(tuple[float, float]):  # noqa: SLOT001  # TODO: Check slots?
     def __add__(self, other: object) -> Vector:
         """Addition of two vectors."""
         if isinstance(other, tuple):
-            if len(other) != len(self):
-                raise RuntimeError("Sizes do not match")
-            return Vector((x + y for x, y in zip(self, other)))
+            return Vector((x + y for x, y in zip(self, other, strict=True)))
         return NotImplemented
 
     def __radd__(self, other: object) -> Vector:
@@ -38,7 +39,7 @@ class Vector(tuple[float, float]):  # noqa: SLOT001  # TODO: Check slots?
         if isinstance(other, (int, float)):
             return Vector(other * x for x in self)
         if isinstance(other, tuple):
-            return Vector((x * y for x, y in zip(self, other)))
+            return Vector((x * y for x, y in zip(self, other, strict=True)))
         return NotImplemented
 
     def __rmul__(self, other: object) -> Vector:

@@ -124,5 +124,5 @@ class CenteredText(view.View):
     @override
     def display(self, surface: pygame.surface.Surface) -> None:
         surface.blit(self.background, (0, 0))
-        for image, rect in zip(self.images, self.rects):
+        for image, rect in zip(self.images, self.rects, strict=True):
             surface.subsurface(rect).blit(image, (0, 0))

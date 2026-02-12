@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import enum
 import json
-from typing import Callable, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pygame.surface
 
 from boomgame import resources
 from boomgame.menu import actions, element, theme
 from boomgame.view import inflate_to_reality, view
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # TODO: Other pages + settings
 

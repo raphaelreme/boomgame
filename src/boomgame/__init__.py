@@ -1,16 +1,8 @@
 """BOOM remake based on pygame."""
 
 import importlib.metadata
+import importlib.resources as importlib_resources
 import sys
-
-# Following https://setuptools.pypa.io/en/latest/userguide/datafiles.html#accessing-data-files-at-runtime
-# We use importlib.resources for python > 3.10 and fallback with importlib_resources
-
-if sys.version_info < (3, 10):
-    import importlib_resources
-else:
-    import importlib.resources as importlib_resources
-
 
 try:
     __version__ = importlib.metadata.version("boomgame")

@@ -7,10 +7,13 @@ from __future__ import annotations
 
 import enum
 import pathlib
-from typing import Callable, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from boomgame.designpattern import observable
 from boomgame.model import entity, events, timer, vector
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class MazeError(Exception):

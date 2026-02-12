@@ -1304,7 +1304,7 @@ class Head(Enemy):
             differences = [player.position - eye_position for player in players]
             distances = [math.sqrt(sum(diff * diff)) for diff in differences]
             directions = [1 / distances[i] * differences[i] for i in range(len(distances))]
-            distance, direction = min(zip(distances, directions))
+            distance, direction = min(zip(distances, directions, strict=True))
 
             if distance < self.SCOPE:
                 self.maze.add_entity(self.BULLET_CLASS(self, direction, eye_position))

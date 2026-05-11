@@ -42,7 +42,7 @@ Launch the game by double clicking on the file or using a terminal:
 $ ./BOOM-ubuntu-20.04
 ```
 
-We also provide a .deb package that wraps this standalone and install it correctly on your os. (This should work on matching ubuntu distribution and hopefull on other debians ones). Download the package (boom-$VERSION-1_all.$BUILDOS.deb), then install it using your package manager:
+We also provide a .deb package that wraps this standalone and install it correctly on your os. (This should work on matching ubuntu distribution and hopefully on other debians ones). Download the package (boom-$VERSION-1_all.$BUILDOS.deb), then install it using your package manager:
 ```bash
 $ apt install ./boom*.deb  # Requires sudo rights
 $ # OR
@@ -83,7 +83,7 @@ Download the source code and install from source:
 
 ```bash
 git clone git@github.com:raphaelreme/boomgame.git  # OR https://github.com/raphaelreme/boomgame.git
-cd torch-kf
+cd boomgame
 pip install .
 ```
 

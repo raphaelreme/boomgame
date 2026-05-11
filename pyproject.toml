@@ -39,7 +39,6 @@ dev = [
     "ipywidgets",
     "matplotlib",
     "mypy",
-    "notebook",
     "numpy",
     "prek",
     "pygbag",
